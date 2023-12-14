@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"build:dev": "rollup -c ./scripts/rollup/rollup.dev.js",
-		"lint": "eslint --ext .ts,.jsx,.tsx --fix --quiet ./packages",
+		"lint": "eslint --ext .js,.ts,.jsx,.tsx --fix --quiet ./packages",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [],
