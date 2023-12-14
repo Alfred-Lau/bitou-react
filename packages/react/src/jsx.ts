@@ -2,12 +2,15 @@
 import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbols';
 
 const ReactELement = function (type, key, ref, props) {
-  const element = {
-    $$typeof: REACT_ELEMENT_TYPE,
-    key,
-    ref,
-    props,
-    __mark: 'qianzhang',
-  };
-  return element;
+	console.log('🚀 ~ file: jsx.ts:5 ~ ReactELement ~ type:', type);
+	const element = {
+		$$typeof: REACT_ELEMENT_TYPE,
+		key,
+		ref,
+		props,
+		__mark: 'qianzhang'
+	};
+	return element;
 };
+
+export { ReactELement };
