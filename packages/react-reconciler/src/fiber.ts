@@ -1,6 +1,7 @@
 import { Key, Props } from 'shared/ReactTypes';
 import { WorkTag } from './workTags';
 import { FiberFlags, NoFlags } from './FiberFlags';
+import { Container } from 'hostConfig';
 
 export class FiberNode {
 	type: any;
@@ -12,8 +13,10 @@ export class FiberNode {
 	child: FiberNode | null;
 	index: number;
 	ref: any;
-	pendingProps: Props;
+	pendingProps: Props | null;
 	memoizedProps: Props;
+	memoizedState: any;
+	updateQueue: any;
 	// 用于双缓存机制，current 指向当前 Fiber 节点，alternate 指向 workInProgress，它们通过 effectTag 来标识 Fiber 节点的生命周期
 	alternative: FiberNode | null;
 	flags: FiberFlags;
@@ -38,6 +41,8 @@ export class FiberNode {
 		this.pendingProps = pendingProps;
 		// reconciler 协调 结束时候的 props
 		this.memoizedProps = null;
+		this.memoizedState = null;
+		this.updateQueue = null;
 
 		// 用于双缓存机制，current 指向当前 Fiber 节点，alternate 指向 workInProgress，它们通过 effectTag 来标识 Fiber 节点的生命周期
 		this.alternative = null;
@@ -45,3 +50,43 @@ export class FiberNode {
 		this.flags = NoFlags;
 	}
 }
+
+export class FiberRootNode {
+	container: Container;
+	current: FiberNode;
+	finishedWork: FiberNode | null;
+	constructor(container: Container, hostRootFiber: FiberNode) {
+		this.container = container;
+		this.current = hostRootFiber;
+		hostRootFiber.stateNode = this;
+		this.finishedWork = null;
+	}
+}
+
+export const createWorkInProgress = (
+	current: FiberNode,
+	pendingProps: Props
+): FiberNode => {
+	// 返回对应的 workInProgress
+	let wip = current.alternative;
+	if (wip === null) {
+		// 首屏渲染 mount
+		wip = new FiberNode(current.tag, pendingProps, current.key);
+		wip.stateNode = current.stateNode;
+		wip.alternative = current;
+		current.alternative = wip;
+	} else {
+		// update
+		wip.pendingProps = pendingProps;
+		// 清除副作用
+		wip.flags = NoFlags;
+	}
+	// 复用
+	wip.type = current.type;
+	wip.updateQueue = current.updateQueue;
+	wip.child = current.child;
+	wip.memoizedProps = current.memoizedProps;
+	wip.memoizedState = current.memoizedState;
+
+	return wip;
+};
