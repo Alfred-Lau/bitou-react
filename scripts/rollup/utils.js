@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import ts from 'rollup-plugin-typescript2';
 import commonjs from '@rollup/plugin-commonjs';
+import replace from '@rollup/plugin-replace';
 const pkgPath = path.resolve(__dirname, '../../packages');
 // 选用 node_modules 作为 dist 的根目录
 const distPath = path.resolve(__dirname, '../../dist/node_modules');
@@ -19,8 +20,11 @@ function getPackageJson(pkgName) {
 	return JSON.parse(str);
 }
 
-function getBaseRollupPlugins({ typescript = {} } = {}) {
-	return [commonjs(), ts(typescript)];
+function getBaseRollupPlugins({
+	typescript = {},
+	alias = { __DEV__: true }
+} = {}) {
+	return [replace(alias), commonjs(), ts(typescript)];
 }
 
 export { resolvePkgPath, getPackageJson, getBaseRollupPlugins };
