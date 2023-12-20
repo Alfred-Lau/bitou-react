@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      "plugin-replace\_":
+        specifier: "link:@rollup/plugin-replace\_"
+        version: "link:@rollup/plugin-replace\_"
     devDependencies:
       '@commitlint/cli':
         specifier: ^18.4.3
