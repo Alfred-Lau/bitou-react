@@ -20,6 +20,7 @@ export class FiberNode {
 	// 用于双缓存机制，current 指向当前 Fiber 节点，alternate 指向 workInProgress，它们通过 effectTag 来标识 Fiber 节点的生命周期
 	alternative: FiberNode | null;
 	flags: FiberFlags;
+	subtreeFlags: FiberFlags;
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
 		this.key = key;
@@ -48,6 +49,8 @@ export class FiberNode {
 		this.alternative = null;
 		// 标记 Fiber 节点的生命周期，副作用
 		this.flags = NoFlags;
+		// 子树包含的副作用
+		this.subtreeFlags = NoFlags;
 	}
 }
 
@@ -78,8 +81,9 @@ export const createWorkInProgress = (
 	} else {
 		// update
 		wip.pendingProps = pendingProps;
-		// 清除副作用
+		// 清除副作用和子树副作用
 		wip.flags = NoFlags;
+		wip.subtreeFlags = NoFlags;
 	}
 	// 复用
 	wip.type = current.type;
@@ -87,7 +91,6 @@ export const createWorkInProgress = (
 	wip.child = current.child;
 	wip.memoizedProps = current.memoizedProps;
 	wip.memoizedState = current.memoizedState;
-
 	return wip;
 };
 

@@ -24,7 +24,7 @@ export const beginWork = (fiber: FiberNode) => {
 			}
 	}
 
-	return fiber;
+	return null;
 };
 
 function updateHostRoot(wip: FiberNode) {
