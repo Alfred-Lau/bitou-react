@@ -8,3 +8,5 @@ export type FiberFlags =
 	| typeof ChildDeletion
 	| typeof Placement
 	| typeof Update;
+
+export const MutationMask = Placement | ChildDeletion | Update;
