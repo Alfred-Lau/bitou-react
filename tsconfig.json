@@ -17,6 +17,7 @@
 		"noImplicitReturns": false,
 		"skipLibCheck": true,
 		"baseUrl": "./packages",
+
 		"paths": {
 			"hostConfig": ["./react-dom/src/hostConfig.ts"]
 		}

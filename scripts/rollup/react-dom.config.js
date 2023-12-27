@@ -14,12 +14,14 @@ export default [
 			{
 				file: `${pagDistPath}/index.js`,
 				name: 'index.js',
+				sourcemap: true,
 				format: 'umd'
 			},
 			// 兼容 react18 react-dom/client
 			{
 				file: `${pagDistPath}/client.js`,
 				name: 'client.js',
+				sourcemap: true,
 				format: 'umd'
 			}
 		],

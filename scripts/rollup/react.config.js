@@ -12,6 +12,7 @@ export default [
 		output: {
 			file: `${pagDistPath}/index.js`,
 			name: 'index.js',
+			sourcemap: true,
 			format: 'umd'
 		},
 		plugins: [
@@ -38,11 +39,15 @@ export default [
 			{
 				file: `${pagDistPath}/jsx-runtime.js`,
 				name: 'jsx-runtime.js',
+				sourcemap: true,
+
 				format: 'umd'
 			},
 			{
 				file: `${pagDistPath}/jsx-dev-runtime.js`,
 				name: 'jsx-dev-runtime.js',
+				sourcemap: true,
+
 				format: 'umd'
 			}
 		],
