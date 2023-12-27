@@ -61,12 +61,13 @@ function appendPlacementNodeIntoContainer(
 	hostParent: Container
 ) {
 	if (finishedWork.tag === HostComponent || finishedWork.tag === HostText) {
-		appendChildToContainer(finishedWork.stateNode, hostParent);
+		appendChildToContainer(hostParent, finishedWork.stateNode);
 		return;
 	}
 
 	const child = finishedWork.child;
 	if (child !== null) {
+		// 先 父 后 子
 		appendPlacementNodeIntoContainer(child, hostParent);
 		let sibling = child.sibling;
 		// 递归向下
