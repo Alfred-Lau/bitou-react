@@ -4,7 +4,8 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"build:dev": "rimraf dist && rollup --bundleConfigAsCjs  -c ./scripts/rollup/react.config.js",
+		"build:dev": "rimraf dist && rollup --bundleConfigAsCjs  -c ./scripts/rollup/dev.config.js",
+		"build:dev-hot": "rimraf dist && rollup --bundleConfigAsCjs  -c ./scripts/rollup/dev.config.js -w",
 		"lint": "eslint --ext .js,.ts,.jsx,.tsx --fix --quiet ./packages",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
@@ -14,6 +15,7 @@
 	"devDependencies": {
 		"@commitlint/cli": "^18.4.3",
 		"@commitlint/config-conventional": "^18.4.3",
+		"@rollup/plugin-alias": "^5.1.0",
 		"@rollup/plugin-commonjs": "^25.0.7",
 		"@typescript-eslint/eslint-plugin": "^6.6.0",
 		"@typescript-eslint/parser": "^6.6.0",

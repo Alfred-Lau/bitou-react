@@ -1,6 +1,8 @@
 // dfs 递归中的归阶段
 
 import {
+	Container,
+	Instance,
 	appendInitialChild,
 	createInstance,
 	createTextInstance
@@ -51,7 +53,7 @@ export const completeWork = (wip: FiberNode) => {
 	}
 };
 
-function appendAllChild(parent: FiberNode, wip: FiberNode) {
+function appendAllChild(parent: Container | Instance, wip: FiberNode) {
 	let node = wip.child;
 	while (node !== null) {
 		if (node.tag === HostComponent || node.tag === HostText) {

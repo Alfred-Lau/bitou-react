@@ -51,7 +51,9 @@ function commitPlacement(finishedWork: FiberNode) {
 	// parent
 	const hostParent = getHostParent(finishedWork);
 	// append child
-	appendPlacementNodeIntoContainer(finishedWork, hostParent);
+	if (hostParent !== null) {
+		appendPlacementNodeIntoContainer(finishedWork, hostParent);
+	}
 }
 
 function appendPlacementNodeIntoContainer(
@@ -75,7 +77,8 @@ function appendPlacementNodeIntoContainer(
 	}
 }
 
-function getHostParent(fiber: FiberNode): Container {
+// ts 类型检查不报错，不意味着rollup 打包没有问题
+function getHostParent(fiber: FiberNode): Container | null {
 	let parent = fiber.return;
 
 	while (parent) {
@@ -94,4 +97,6 @@ function getHostParent(fiber: FiberNode): Container {
 	if (__DEV__) {
 		console.error('找不到父节点 ', fiber);
 	}
+
+	return null;
 }
