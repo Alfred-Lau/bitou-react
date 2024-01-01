@@ -65,6 +65,8 @@ function mountState<State>(
 
 	const queue = createUpdateQueue<State>();
 	hook.updateQueue = queue;
+	// 2. 将当前 useState 对应的 hook数据的 memorizedState 指向 useState 的 initialState
+	hook.memorizedState = memoizedState;
 
 	// @ts-ignore
 	const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
