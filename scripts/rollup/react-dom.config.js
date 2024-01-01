@@ -13,14 +13,14 @@ export default [
 		output: [
 			{
 				file: `${pagDistPath}/index.js`,
-				name: 'index.js',
+				name: 'ReactDOM',
 				sourcemap: true,
 				format: 'umd'
 			},
 			// 兼容 react18 react-dom/client
 			{
 				file: `${pagDistPath}/client.js`,
-				name: 'client.js',
+				name: 'client',
 				sourcemap: true,
 				format: 'umd'
 			}
@@ -51,5 +51,19 @@ export default [
 				}
 			})
 		]
+	},
+	// react-test-utils
+	{
+		input: `${pkgPath}/test-utils.ts`,
+		output: [
+			{
+				file: `${pagDistPath}/test-utils.js`,
+				name: 'testUtils',
+				// sourcemap: true,
+				format: 'umd'
+			}
+		],
+		externals: ['react-dom', 'react'], // 外部依赖
+		plugins: getBaseRollupPlugins()
 	}
 ];

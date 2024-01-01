@@ -11,7 +11,7 @@ export default [
 		input: `${pkgPath}/${module}`,
 		output: {
 			file: `${pagDistPath}/index.js`,
-			name: 'index.js',
+			name: 'React',
 			sourcemap: true,
 			format: 'umd'
 		},
@@ -38,14 +38,14 @@ export default [
 		output: [
 			{
 				file: `${pagDistPath}/jsx-runtime.js`,
-				name: 'jsx-runtime.js',
+				name: 'jsx-runtime',
 				sourcemap: true,
 
 				format: 'umd'
 			},
 			{
 				file: `${pagDistPath}/jsx-dev-runtime.js`,
-				name: 'jsx-dev-runtime.js',
+				name: 'jsx-dev-runtime',
 				sourcemap: true,
 
 				format: 'umd'
