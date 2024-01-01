@@ -63,7 +63,7 @@ function commitRoot(root: FiberRootNode) {
 	}
 
 	if (__DEV__) {
-		console.log('commitRoot 阶段开始:', finishedWork);
+		console.log('commitRoot 阶段开始:！！', finishedWork);
 	}
 	//  重置
 	root.finishedWork = null;
