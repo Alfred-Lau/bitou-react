@@ -1,6 +1,12 @@
-import { Container, appendChildToContainer } from 'hostConfig';
+import { Container, appendChildToContainer, commitUpdate } from 'hostConfig';
 import { FiberNode, FiberRootNode } from './fiber';
-import { MutationMask, NoFlags, Placement } from './fiberFlags';
+import {
+	ChildDeletion,
+	MutationMask,
+	NoFlags,
+	Placement,
+	Update
+} from './fiberFlags';
 import { HostComponent, HostRoot, HostText } from './workTags';
 
 let nextEffect: FiberNode | null = null;
@@ -35,14 +41,34 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
 
 const commitMutationEffectsOnFiber = (finishedWork: FiberNode) => {
 	const flags = finishedWork.flags;
-	if (flags & Placement) {
+	// 处理 placement flag
+	if ((flags & Placement) !== NoFlags) {
 		commitPlacement(finishedWork);
 		// 把 Placement 标记清除
 		finishedWork.flags &= ~Placement;
 	}
 
-	//
+	// 处理 update flag
+	if ((flags & Update) !== NoFlags) {
+		commitUpdate(finishedWork);
+		finishedWork.flags &= ~Update;
+	}
+
+	// 处理 deletion flag
+	if ((flags & ChildDeletion) !== NoFlags) {
+		const deletions = finishedWork.deletions;
+		if (deletions !== null) {
+			deletions.forEach(commitDeletion);
+		}
+		finishedWork.flags &= ~Update;
+	}
 };
+
+function commitDeletion(childToDelete: FiberNode) {
+	if (__DEV__) {
+		console.log('commitDeletion', childToDelete);
+	}
+}
 
 function commitPlacement(finishedWork: FiberNode) {
 	if (__DEV__) {

@@ -18,6 +18,7 @@ export class FiberNode {
 	// 函数式组件中用来链表存储 hook 的数据，类组件中用来存储实例。
 	memoizedState: any;
 	updateQueue: any;
+	deletions: FiberNode[] | null;
 	// 用于双缓存机制，current 指向当前 Fiber 节点，alternate 指向 workInProgress，它们通过 effectTag 来标识 Fiber 节点的生命周期
 	alternative: FiberNode | null;
 	flags: FiberFlags;
@@ -45,6 +46,7 @@ export class FiberNode {
 		this.memoizedProps = null;
 		this.memoizedState = null;
 		this.updateQueue = null;
+		this.deletions = null;
 
 		// 用于双缓存机制，current 指向当前 Fiber 节点，alternate 指向 workInProgress，它们通过 effectTag 来标识 Fiber 节点的生命周期
 		this.alternative = null;
@@ -82,9 +84,11 @@ export const createWorkInProgress = (
 	} else {
 		// update
 		wip.pendingProps = pendingProps;
+
 		// 清除副作用和子树副作用
 		wip.flags = NoFlags;
 		wip.subtreeFlags = NoFlags;
+		wip.deletions = null;
 	}
 	// 复用
 	wip.type = current.type;
