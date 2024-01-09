@@ -68,6 +68,8 @@ function commitDeletion(childToDelete: FiberNode) {
 	if (__DEV__) {
 		console.log('commitDeletion', childToDelete);
 	}
+
+	// 递归子树
 }
 
 function commitPlacement(finishedWork: FiberNode) {
