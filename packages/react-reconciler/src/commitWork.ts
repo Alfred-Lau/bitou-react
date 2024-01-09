@@ -70,6 +70,52 @@ function commitDeletion(childToDelete: FiberNode) {
 	}
 
 	// 递归子树
+	commitNestedComponent(childToDelete, (unmountFiber: FiberNode) => {
+		switch (unmountFiber.tag) {
+			case HostComponent:
+				// todo:  解绑 ref
+				break;
+		
+			default:
+				break;
+		}
+	})
+	// 移除 roothostcomponents的dom
+}
+
+/**
+ *
+ *
+ * @param {*} root root fiber
+ * @param {*} onCommitUnmount
+ */
+function commitNestedComponent(root:FiberNode ,onCommitUnmount: (fiber: FiberNode) => void) {
+	let node = root;
+	while (true) {
+		// 深度优先遍历
+		onCommitUnmount(node);
+		if(node.child !== null) {
+			// 向下遍历
+			node.child.return = node;
+			node = node.child;
+			continue
+		}
+
+		if(node === root) {
+			// 终止条件
+			return
+		}	
+		while(node.sibling === null) {
+			if(node.return === null || node.return === root) {
+				return
+			}
+			// 向上遍历
+			node = node.return
+		}
+
+		node.sibling.return = node.return;
+		node = node.sibling
+	}
 }
 
 function commitPlacement(finishedWork: FiberNode) {
