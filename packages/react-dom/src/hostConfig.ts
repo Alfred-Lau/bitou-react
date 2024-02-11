@@ -42,3 +42,10 @@ export function commitUpdate(fiber: FiberNode) {
 export function commitTextUpdate(textInstance: TextInstance, content: string) {
 	textInstance.textContent = content;
 }
+
+export function removeChild(
+	child: Instance | TextInstance,
+	container: Container
+) {
+	container.removeChild(child);
+}

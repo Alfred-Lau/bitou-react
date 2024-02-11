@@ -1,4 +1,9 @@
-import { Container, appendChildToContainer, commitUpdate } from 'hostConfig';
+import {
+	Container,
+	appendChildToContainer,
+	commitUpdate,
+	removeChild
+} from 'hostConfig';
 import { FiberNode, FiberRootNode } from './fiber';
 import {
 	ChildDeletion,
@@ -7,7 +12,12 @@ import {
 	Placement,
 	Update
 } from './fiberFlags';
-import { HostComponent, HostRoot, HostText } from './workTags';
+import {
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText
+} from './workTags';
 
 let nextEffect: FiberNode | null = null;
 
@@ -68,19 +78,45 @@ function commitDeletion(childToDelete: FiberNode) {
 	if (__DEV__) {
 		console.log('commitDeletion', childToDelete);
 	}
+	let rootHostNode: FiberNode | null = null;
 
 	// 递归子树
 	commitNestedComponent(childToDelete, (unmountFiber: FiberNode) => {
 		switch (unmountFiber.tag) {
 			case HostComponent:
+				if (rootHostNode === null) {
+					rootHostNode = unmountFiber;
+				}
 				// todo:  解绑 ref
-				break;
-		
+				return;
+
+			case HostText:
+				if (rootHostNode === null) {
+					rootHostNode = unmountFiber;
+				}
+				// todo:  解绑 ref
+				return;
+
+			case FunctionComponent:
+				// todo:  useEffect unmount
+				return;
 			default:
-				break;
+				if (__DEV__) {
+					console.warn('未处理的unmount 类型', unmountFiber);
+				}
 		}
-	})
+	});
 	// 移除 roothostcomponents的dom
+
+	if (rootHostNode !== null) {
+		const hostParent = getHostParent(rootHostNode);
+		if (hostParent !== null) {
+			removeChild(rootHostNode, hostParent);
+		}
+	}
+
+	childToDelete.return = null;
+	childToDelete.child = null;
 }
 
 /**
@@ -89,32 +125,35 @@ function commitDeletion(childToDelete: FiberNode) {
  * @param {*} root root fiber
  * @param {*} onCommitUnmount
  */
-function commitNestedComponent(root:FiberNode ,onCommitUnmount: (fiber: FiberNode) => void) {
+function commitNestedComponent(
+	root: FiberNode,
+	onCommitUnmount: (fiber: FiberNode) => void
+) {
 	let node = root;
 	while (true) {
 		// 深度优先遍历
 		onCommitUnmount(node);
-		if(node.child !== null) {
+		if (node.child !== null) {
 			// 向下遍历
 			node.child.return = node;
 			node = node.child;
-			continue
+			continue;
 		}
 
-		if(node === root) {
+		if (node === root) {
 			// 终止条件
-			return
-		}	
-		while(node.sibling === null) {
-			if(node.return === null || node.return === root) {
-				return
+			return;
+		}
+		while (node.sibling === null) {
+			if (node.return === null || node.return === root) {
+				return;
 			}
 			// 向上遍历
-			node = node.return
+			node = node.return;
 		}
 
 		node.sibling.return = node.return;
-		node = node.sibling
+		node = node.sibling;
 	}
 }
 
