@@ -8,6 +8,8 @@ import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbols';
 import { HostText } from './workTags';
 import { ChildDeletion, Placement } from './fiberFlags';
 
+type ExistingChildren = Map<string | number, FiberNode>;
+
 function ChildReconciler(shouldTrackEffects: boolean) {
 	function deleteChild(returnFiber: FiberNode, childToDelete: FiberNode) {
 		if (!shouldTrackEffects) {
@@ -115,6 +117,132 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		return fiber;
 	}
 
+	// 处理多节点复用
+	function reconcilerChildrenArray(
+		returnFiber: FiberNode,
+		currentFirstChild: FiberNode | null,
+		newChild: any[]
+	) {
+		// 最后一个可复用fiber在current中的index
+		let lastPlacedIndex = 0;
+		// 创建的最后一个fiber
+		let lastNewFiber: FiberNode | null = null;
+		// 创建的第一个 fiber
+		let firstNewFiber: FiberNode | null = null;
+
+		// 1. 将 current 保存在 map 中
+		const existingChildren: ExistingChildren = new Map();
+		let current = currentFirstChild;
+
+		// 遍历 current，将节点保存在 map 中
+		while (current !== null) {
+			const keyToUse = current.key !== null ? current.key : current.index;
+			existingChildren.set(keyToUse, current);
+			current = current.sibling;
+		}
+
+		for (let i = 0; i < newChild.length; i++) {
+			// 2. 遍历 newChild，如果在 map 中找到对应的节点，证明可以复用，否则创建新的节点
+			const after = newChild[i];
+			const newFiber = updateFromMap(returnFiber, existingChildren, i, after);
+
+			// falsy 的情况
+			if (newFiber === null) {
+				continue;
+			}
+
+			// 3. 标记移动还是插入
+			newFiber.index = i;
+			newFiber.return = returnFiber;
+
+			if (lastNewFiber === null) {
+				lastNewFiber = newFiber;
+				firstNewFiber = newFiber;
+			} else {
+				lastNewFiber.sibling = newFiber;
+				lastNewFiber = lastNewFiber.sibling;
+			}
+
+			if (!shouldTrackEffects) {
+				continue;
+			}
+
+			const current = newFiber.alternative;
+			if (current !== null) {
+				const oldIndex = current.index;
+				if (oldIndex < lastPlacedIndex) {
+					// 移动
+					newFiber.flags |= Placement;
+					continue;
+				} else {
+					// 不移动
+					lastPlacedIndex = oldIndex;
+				}
+			} else {
+				// mount:插入
+				newFiber.flags |= Placement;
+			}
+		}
+
+		// 4. 标记Map剩余的节点为删除
+
+		existingChildren.forEach((fiber) => {
+			deleteChild(returnFiber, fiber);
+		});
+
+		// 返回第一个新的fiber
+		return firstNewFiber;
+	}
+
+	function updateFromMap(
+		returnFiber: FiberNode,
+		existingChildren: ExistingChildren,
+		index: number,
+		element: any
+	): FiberNode | null {
+		const keyToUse = element.key !== null ? element.key : index;
+		const before = existingChildren.get(keyToUse);
+
+		// HostText
+		if (typeof element === 'string' || typeof element === 'number') {
+			if (before) {
+				if (before.tag === HostText) {
+					// 可以复用
+					existingChildren.delete(keyToUse);
+					return useFiber(before, { content: element + '' });
+				}
+			}
+			return new FiberNode(HostText, { content: element + '' }, returnFiber);
+		}
+
+		// ReactElement
+		if (typeof element === 'object' && element !== null) {
+			switch (element.$$typeof) {
+				case REACT_ELEMENT_TYPE:
+					if (before) {
+						if (before.type === element.type) {
+							existingChildren.delete(keyToUse);
+							return useFiber(before, element.props);
+						}
+					}
+					return createFiberFromElement(element);
+
+				default:
+					break;
+			}
+		}
+
+		// TODO: 数组类型
+		if (Array.isArray(element)) {
+			// ...
+			if (__DEV__) {
+				console.warn('还未实现数组类型的', element);
+			}
+		}
+
+		return null;
+	}
+
 	// 闭包的作用：1. 保存 shouldTrackEffects 的值；2. 保存 shouldTrackEffects 的值
 	return function reconcilerChildFibers(
 		returnFiber: FiberNode,
@@ -137,6 +265,9 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 			}
 		}
 		// 多节点的情况 ul > li*3
+		if (Array.isArray(newChild)) {
+			return reconcilerChildrenArray(returnFiber, currentFiber, newChild);
+		}
 
 		// host text
 		if (typeof newChild === 'string' || typeof newChild === 'number') {
