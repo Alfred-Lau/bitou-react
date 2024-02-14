@@ -11,10 +11,14 @@ declare global {
 	}
 }
 
+function Child() {
+	return <span>bitou-react</span>;
+}
+
 const App = () => {
 	const [num, setNum] = useState(100);
 	window.setNum = setNum;
-	return <div>{num}</div>;
+	return num === 3 ? <Child /> : <div>{num}</div>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
