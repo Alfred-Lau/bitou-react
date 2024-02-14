@@ -11,14 +11,13 @@ declare global {
 	}
 }
 
-function Child() {
-	return <span>bitou-react</span>;
-}
-
 const App = () => {
 	const [num, setNum] = useState(100);
-	window.setNum = setNum;
-	return num === 3 ? <Child /> : <div>{num}</div>;
+	return (
+		<div onClick={() => setNum(num + 1)} onClickCapture={() => setNum(num + 1)}>
+			{num}
+		</div>
+	);
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
