@@ -4,6 +4,8 @@ import replace from '@rollup/plugin-replace';
 import { resolvePkgPath } from '../rollup/utils';
 import path from 'path';
 
+console.log('resolvePkgPath', resolvePkgPath('react'));
+
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [

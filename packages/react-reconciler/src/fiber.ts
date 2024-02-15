@@ -25,7 +25,7 @@ export class FiberNode {
 	subtreeFlags: FiberFlags;
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
-		this.key = key;
+		this.key = key || null;
 		// div dom
 		this.stateNode = null;
 		//function component ()=>{}
@@ -112,5 +112,10 @@ export function createFiberFromElement(element: ReactElementType) {
 
 	const fiber = new FiberNode(fiberTag, props, key);
 	fiber.type = type;
+	return fiber;
+}
+
+export function createFiberFromFragment(elements: any[], key: Key): FiberNode {
+	const fiber = new FiberNode();
 	return fiber;
 }

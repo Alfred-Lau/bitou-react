@@ -1,9 +1,9 @@
 // dfs 递归中的递阶段
-
 import { ReactElementType } from 'shared/ReactTypes';
 import { FiberNode } from './fiber';
 import { UpdateQueue, processUpdateQueue } from './updateQueue';
 import {
+	Fragment,
 	FunctionComponent,
 	HostComponent,
 	HostRoot,
@@ -12,7 +12,6 @@ import {
 import { mountChildFibers, reconcilerChildFibers } from './childFiber';
 import { renderWithHooks } from './fiberHooks';
 
-//
 export const beginWork = (fiber: FiberNode) => {
 	// 比较，返回子 FiberNode
 
@@ -26,6 +25,8 @@ export const beginWork = (fiber: FiberNode) => {
 			return null;
 		case FunctionComponent:
 			return updateFunctionComponent(fiber);
+		case Fragment:
+			return updateFragment(fiber);
 		default:
 			if (__DEV__) {
 				console.warn('beginWork: 未知的 fiber tag', fiber.tag);
@@ -34,6 +35,12 @@ export const beginWork = (fiber: FiberNode) => {
 
 	return null;
 };
+
+function updateFragment(wip: FiberNode) {
+	const nextChildren = wip.pendingProps;
+	reconcilerChildren(wip, nextChildren);
+	return wip.child;
+}
 
 function updateFunctionComponent(wip: FiberNode) {
 	// 把 函数式组件 的执行结果作为子节点

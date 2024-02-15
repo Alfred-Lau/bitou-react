@@ -3,6 +3,7 @@ import currentDispatcher, {
 	resolveDispatch
 } from './src/currentDispatcher';
 import { jsx, isValidElement as RawIsValidElement } from './src/jsx';
+export { REACT_FRAGMENT_TYPE as Fragment } from 'shared/ReactSymbols';
 
 export const useState: Dispatcher['useState'] = (initialState) => {
 	const dispatcher = resolveDispatch();
