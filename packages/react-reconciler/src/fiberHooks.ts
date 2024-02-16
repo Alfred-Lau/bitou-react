@@ -70,6 +70,8 @@ function updateState<State>(): [State, Dispatch<State>] {
 	// 2. 计算新的 state
 	const queue = hook.updateQueue as UpdateQueue<State>;
 	const pending = queue.shared.pending;
+	// fix: update 被叠加的问题
+	queue.shared.pending = null;
 
 	if (pending !== null) {
 		const { memoizedState } = processUpdateQueue(
