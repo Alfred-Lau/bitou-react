@@ -11,20 +11,21 @@ import {
 } from './workTags';
 import { mountChildFibers, reconcilerChildFibers } from './childFiber';
 import { renderWithHooks } from './fiberHooks';
+import { Lane } from './fiberLanes';
 
-export const beginWork = (fiber: FiberNode) => {
+export const beginWork = (fiber: FiberNode, renderLane: Lane) => {
 	// 比较，返回子 FiberNode
 
 	switch (fiber.tag) {
 		case HostRoot:
 			// 1. 计算状态的最新值；2. 返回子节点
-			return updateHostRoot(fiber);
+			return updateHostRoot(fiber, renderLane);
 		case HostComponent:
 			return updateHostComponent(fiber);
 		case HostText:
 			return null;
 		case FunctionComponent:
-			return updateFunctionComponent(fiber);
+			return updateFunctionComponent(fiber, renderLane);
 		case Fragment:
 			return updateFragment(fiber);
 		default:
@@ -42,19 +43,19 @@ function updateFragment(wip: FiberNode) {
 	return wip.child;
 }
 
-function updateFunctionComponent(wip: FiberNode) {
+function updateFunctionComponent(wip: FiberNode, renderLane: Lane) {
 	// 把 函数式组件 的执行结果作为子节点
-	const nextChildren = renderWithHooks(wip);
+	const nextChildren = renderWithHooks(wip, renderLane);
 	reconcilerChildren(wip, nextChildren);
 	return wip.child;
 }
 
-function updateHostRoot(wip: FiberNode) {
+function updateHostRoot(wip: FiberNode, renderLane: Lane) {
 	const baseState = wip.memoizedState;
 	const updateQueue = wip.updateQueue as UpdateQueue<Element>;
 	const pending = updateQueue.shared.pending;
 	updateQueue.shared.pending = null;
-	const { memoizedState } = processUpdateQueue(baseState, pending);
+	const { memoizedState } = processUpdateQueue(baseState, pending, renderLane);
 	wip.memoizedState = memoizedState;
 
 	const nextChildren = wip.memoizedState;
