@@ -2,8 +2,6 @@ import { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
-console.log('🚀 ~ React:', ReactDOM);
-
 // 热更新
 console.log('--', import.meta.hot);
 

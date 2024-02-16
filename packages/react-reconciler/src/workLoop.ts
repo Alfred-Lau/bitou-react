@@ -3,17 +3,23 @@ import { commitMutationEffects } from './commitWork';
 import { completeWork } from './completeWork';
 import { FiberNode, FiberRootNode, createWorkInProgress } from './fiber';
 import { MutationMask, NoFlags } from './fiberFlags';
+import { Lane, mergeLanes } from './fiberLanes';
 import { HostRoot } from './workTags';
 
 // 全局指针，指向当前正在工作的 FiberNode
 let workInProgress: FiberNode | null = null;
 
-export function scheduleUpdateOnFiber(fiber: FiberNode) {
+export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
 	// 调度功能
 	// 从当前节点开始向上遍历，找到根节点
 	const root = markUpdateFromFiberToRoot(fiber);
+	markRootUpdated(root, lane);
 	// 从根节点开始渲染
 	renderRoot(root);
+}
+
+function markRootUpdated(root: FiberRootNode, lane: Lane) {
+	root.pendingLanes = mergeLanes(root.pendingLanes, lane);
 }
 
 function markUpdateFromFiberToRoot(fiber: FiberNode) {
