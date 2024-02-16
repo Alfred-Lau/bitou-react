@@ -16,10 +16,14 @@ const App = () => {
 			? [<li key="1">1</li>, <li key="2">2</li>, <li key="3">3</li>]
 			: [<li key="3">3</li>, <li key="2">2</li>, <li key="1">1</li>];
 	return (
-		<>
-			<div></div>
-			<div></div>
-		</>
+		<ul>
+			<li>1</li>
+			<li>2</li>
+			<>
+				<li>3</li>
+				<li>4</li>
+			</>
+		</ul>
 	);
 	return (
 		<div onClick={() => setNum(num + 1)} onClickCapture={() => setNum(num + 1)}>

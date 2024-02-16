@@ -276,7 +276,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		const isUnkeyedTopLevelFragment =
 			typeof newChild === 'object' &&
 			newChild !== null &&
-			newChild.$$typeof === REACT_FRAGMENT_TYPE &&
+			newChild.type === REACT_FRAGMENT_TYPE &&
 			newChild.key === null;
 
 		if (isUnkeyedTopLevelFragment) {
@@ -299,7 +299,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 					if (__DEV__) {
 						console.warn('reconcilerChildFibers: 未知的 child 类型', newChild);
 					}
-					return null;
+					break;
 			}
 		}
 
