@@ -11,7 +11,7 @@ import {
 import { Action } from 'shared/ReactTypes';
 import { scheduleUpdateOnFiber } from './workLoop';
 import { Lane, NoLane, requestUpdateLane } from './fiberLanes';
-import { Flags, Passive } from './fiberFlags';
+import { Flags, PassiveEffect } from './fiberFlags';
 import { HookHasEffect } from './hookEffectTags';
 
 let currentlyRenderingFiber: FiberNode | null = null;
@@ -86,10 +86,10 @@ function mountEffect(callback: EffectCallback | void, deps: EffectDeps | null) {
 	// 1. 找到当前 useEffect 对应的 hook数据
 	const hook = mountWorkInProgressHook();
 	const nextDeps = deps === null ? null : deps;
-	(currentlyRenderingFiber as FiberNode).flags |= Passive;
+	(currentlyRenderingFiber as FiberNode).flags |= PassiveEffect;
 
 	hook.memorizedState = pushEffect(
-		Passive | HookHasEffect,
+		PassiveEffect | HookHasEffect,
 		callback,
 		undefined,
 		nextDeps
