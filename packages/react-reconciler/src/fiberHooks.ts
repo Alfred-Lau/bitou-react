@@ -47,8 +47,10 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 	// 赋值操作
 
 	currentlyRenderingFiber = wip;
-	// 重置操作
+	// 重置hooks操作
 	wip.memoizedState = null;
+	// 重置Effect链表
+	wip.updateQueue = null;
 	renderLane = lane;
 
 	const current = wip.alternative;
@@ -96,6 +98,8 @@ function mountEffect(callback: EffectCallback | void, deps: EffectDeps | null) {
 	);
 }
 
+function updateEffect() {}
+
 function pushEffect(
 	hookFlags: Flags,
 	create: EffectCallback | void,
@@ -141,8 +145,6 @@ function createFCUpdateQueue<State>() {
 
 	return updateQueue;
 }
-
-function updateEffect() {}
 
 function updateState<State>(): [State, Dispatch<State>] {
 	// 1. 找到当前 useState 对应的 hook数据
