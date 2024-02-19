@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
@@ -6,23 +6,38 @@ import './index.css';
 console.log('--', import.meta.hot);
 
 const App = () => {
-	const [num, setNum] = useState(100);
+	const [count, setCount] = useState(0);
 
-	// 可以证明fiber 节点的复用
-	const arr =
-		num % 2
-			? [<li key="1">1</li>, <li key="2">2</li>, <li key="3">3</li>]
-			: [<li key="3">3</li>, <li key="2">2</li>, <li key="1">1</li>];
+	useEffect(() => {
+		console.log('app mount');
+	}, []);
+
+	useEffect(() => {
+		console.log('num change create effect');
+		return () => {
+			console.log('num change descory effect');
+		};
+	}, [count]);
 	return (
-		<ul
-			onClick={() => {
-				setNum((num) => num + 1);
-				setNum((num) => num + 1);
-				setNum((num) => num + 1);
-			}}
-		>
-			{num}
-		</ul>
+		<div onClick={(count) => setCount(count + 1)}>
+			hello,world
+			{count % 2 ? <Child count={count} /> : 'noop'}
+		</div>
+	);
+};
+
+const Child = (props) => {
+	useEffect(() => {
+		console.log('child mount');
+		return () => {
+			console.log('child unmount');
+		};
+	}, []);
+
+	return (
+		<div>
+			<span>{props.count}</span>
+		</div>
 	);
 };
 

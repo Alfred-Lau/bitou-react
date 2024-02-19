@@ -8,13 +8,7 @@ import {
 	PendingPassiveEffects,
 	createWorkInProgress
 } from './fiber';
-import {
-	Flags,
-	MutationMask,
-	NoFlags,
-	PassiveEffect,
-	PassiveMask
-} from './fiberFlags';
+import { Flags, MutationMask, NoFlags, PassiveMask } from './fiberFlags';
 import {
 	Lane,
 	NoLane,
@@ -57,7 +51,7 @@ export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
 
 function ensureRootIsScheduled(root: FiberRootNode) {
 	const updateLane = getHighestPriorityLane(root.pendingLanes);
-	if (updateLane === NoFlags) {
+	if (updateLane === NoLane) {
 		// 没有更新
 		return;
 	}
@@ -176,8 +170,9 @@ function commitRoot(root: FiberRootNode) {
 	// 判断是否存在 3个子阶段需要执行的操作
 
 	const subtreeHasEffect =
-		(finishedWork.subtreeFlags & MutationMask) !== NoFlags;
-	const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
+		(finishedWork.subtreeFlags & (MutationMask | PassiveMask)) !== NoFlags;
+	const rootHasEffect =
+		(finishedWork.flags & (MutationMask | PassiveMask)) !== NoFlags;
 
 	if (subtreeHasEffect || rootHasEffect) {
 		// beforeMutation
@@ -218,6 +213,8 @@ function flushPassiveEffects(pendingPassiveEffects: PendingPassiveEffects) {
 
 	// 执行微任务
 	flushSyncCallbacks();
+
+	return;
 }
 
 function commitHookEffectList(

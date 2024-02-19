@@ -12,6 +12,7 @@ import {
 	MutationMask,
 	NoFlags,
 	PassiveEffect,
+	PassiveMask,
 	Placement,
 	Update
 } from './fiberFlags';
@@ -35,7 +36,7 @@ export const commitMutationEffects = (
 		// 向下遍历
 		const child: FiberNode | null = nextEffect.child;
 		if (
-			(nextEffect.subtreeFlags & MutationMask) !== NoFlags &&
+			(nextEffect.subtreeFlags & (MutationMask | PassiveMask)) !== NoFlags &&
 			child !== null
 		) {
 			// 有副作用
@@ -82,11 +83,11 @@ const commitMutationEffectsOnFiber = (
 				commitDeletion(childToDelete, root);
 			});
 		}
-		finishedWork.flags &= ~Update;
+		finishedWork.flags &= ~ChildDeletion;
 	}
 
 	// 处理 passive effect flag
-	if ((flags & MutationMask) !== NoFlags) {
+	if ((flags & PassiveEffect) !== NoFlags) {
 		// 收集回调
 		commitPassiveEffect(finishedWork, root, 'update');
 		finishedWork.flags &= ~PassiveEffect;

@@ -12,7 +12,7 @@ import { Action } from 'shared/ReactTypes';
 import { scheduleUpdateOnFiber } from './workLoop';
 import { Lane, NoLane, requestUpdateLane } from './fiberLanes';
 import { Flags, PassiveEffect } from './fiberFlags';
-import { HookHasEffect } from './hookEffectTags';
+import { HookHasEffect, Passsive } from './hookEffectTags';
 
 let currentlyRenderingFiber: FiberNode | null = null;
 let workInProgressHook: Hook | null = null;
@@ -41,7 +41,7 @@ export interface FCUpdateQueue<State> extends UpdateQueue<State> {
 }
 
 type EffectCallback = () => void;
-type EffectDeps = unknown[] | null;
+type EffectDeps = any[] | null;
 
 export function renderWithHooks(wip: FiberNode, lane: Lane) {
 	// 赋值操作
@@ -84,27 +84,72 @@ const HooksDispatcherOnUpdate: Dispatcher = {
 	useEffect: updateEffect
 };
 
-function mountEffect(callback: EffectCallback | void, deps: EffectDeps | null) {
+function mountEffect(create: EffectCallback | void, deps: EffectDeps | void) {
 	// 1. 找到当前 useEffect 对应的 hook数据
 	const hook = mountWorkInProgressHook();
-	const nextDeps = deps === null ? null : deps;
+	const nextDeps = deps === undefined ? null : deps;
 	(currentlyRenderingFiber as FiberNode).flags |= PassiveEffect;
 
+	// Passsive 和 PasssiveEffect 的区别是：
 	hook.memorizedState = pushEffect(
-		PassiveEffect | HookHasEffect,
-		callback,
+		Passsive | HookHasEffect,
+		create,
 		undefined,
 		nextDeps
 	);
 }
 
-function updateEffect() {}
+function updateEffect(create: EffectCallback | void, deps: EffectDeps | void) {
+	// 1. 找到当前 useEffect 对应的 hook数据
+	const hook = updateWorkInProgressHook();
+	const nextDeps = deps === undefined ? null : deps;
+	let destory: EffectCallback | void;
+
+	if (currentHook !== null) {
+		const prevEffect = currentHook.memorizedState as Effect;
+		destory = prevEffect.destroy;
+
+		if (nextDeps !== null) {
+			// 浅比较依赖
+			const prevDeps = prevEffect.deps;
+			if (areHookInputsEqual(nextDeps, prevDeps)) {
+				hook.memorizedState = pushEffect(Passsive, create, destory, nextDeps);
+				return;
+			}
+		}
+
+		// 依赖变化，执行销毁操作
+		(currentlyRenderingFiber as FiberNode).flags |= PassiveEffect;
+
+		hook.memorizedState = pushEffect(
+			Passsive | HookHasEffect,
+			create,
+			destory,
+			nextDeps
+		);
+	}
+}
+
+function areHookInputsEqual(nextDeps: EffectDeps, prevDeps: EffectDeps) {
+	if (prevDeps === null || nextDeps === null) {
+		return false;
+	}
+	for (let i = 0; i < prevDeps.length && i < nextDeps.length; i++) {
+		if (Object.is(prevDeps[i], nextDeps[i])) {
+			continue;
+		}
+
+		return false;
+	}
+
+	return true;
+}
 
 function pushEffect(
 	hookFlags: Flags,
 	create: EffectCallback | void,
 	destroy: EffectCallback | void,
-	deps: EffectDeps | null
+	deps: EffectDeps
 ): Effect {
 	const effect: Effect = {
 		tag: hookFlags,
@@ -115,7 +160,7 @@ function pushEffect(
 	};
 
 	const fiber = currentlyRenderingFiber as FiberNode;
-	const updateQueue = fiber.updateQueue as FCUpdateQueue<unknown>;
+	const updateQueue = fiber.updateQueue as FCUpdateQueue<any>;
 	if (updateQueue === null) {
 		const updateQueue = createFCUpdateQueue();
 		fiber.updateQueue = updateQueue;
