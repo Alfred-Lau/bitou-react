@@ -42,9 +42,9 @@ export const appendInitialChild = (
 	const prevParentId = child.parent;
 	const parentId = 'rootID' in parent ? parent.rootID : parent.id;
 
-	// if (prevParentId !== -1 && prevParentId !== parentId) {
-	// 	throw new Error('');
-	// }
+	if (prevParentId !== -1 && prevParentId !== parentId) {
+		throw new Error('');
+	}
 
 	child.parent = parentId;
 	parent.children.push(child);
