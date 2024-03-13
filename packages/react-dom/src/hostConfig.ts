@@ -1,5 +1,5 @@
 import { FiberNode } from 'react-reconciler/src/fiber';
-import { HostText } from 'react-reconciler/src/workTags';
+import { HostComponent, HostText } from 'react-reconciler/src/workTags';
 import { DOMElement, updateFiberProps } from './SyntheticEvent';
 import { Props } from 'shared/ReactTypes';
 
@@ -33,6 +33,12 @@ export function commitUpdate(fiber: FiberNode) {
 		case HostText:
 			const text = fiber.memoizedProps.content;
 			return commitTextUpdate(fiber.stateNode as TextInstance, text);
+
+		case HostComponent:
+			return updateFiberProps(
+				fiber.stateNode as DOMElement,
+				fiber.memoizedProps
+			);
 
 		default:
 			if (__DEV__) {

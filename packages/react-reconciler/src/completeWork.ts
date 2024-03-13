@@ -16,7 +16,7 @@ import {
 	HostText
 } from './workTags';
 import { NoFlags, Update } from './fiberFlags';
-import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
+// import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
 
 function markUpdate(fiber: FiberNode) {
 	fiber.flags |= Update;
@@ -33,7 +33,9 @@ export const completeWork = (wip: FiberNode) => {
 			if (current !== null && wip.stateNode) {
 				// update
 				// 判断 props 是否变化
-				updateFiberProps(wip.stateNode, newProps);
+				// FIXME: 这里只是简单的判断 props 是否变化，实际上还需要判断 props 的每一个属性是否变化
+				markUpdate(wip);
+				// updateFiberProps(wip.stateNode, newProps);
 			} else {
 				// 首屏渲染，构建离屏 dom
 				// 1. 构建dom ； 2. 将 dom 插入到dom 树中

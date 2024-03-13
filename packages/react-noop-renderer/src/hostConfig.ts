@@ -43,7 +43,7 @@ export const appendInitialChild = (
 	const parentId = 'rootID' in parent ? parent.rootID : parent.id;
 
 	if (prevParentId !== -1 && prevParentId !== parentId) {
-		throw new Error('');
+		throw new Error('不能重复挂载 child');
 	}
 
 	child.parent = parentId;
@@ -56,15 +56,24 @@ export const createTextInstance = (content: string) => {
 		text: content,
 		parent: -1
 	};
-	return document.createTextNode(content);
+	return instance;
 };
 
-export const appendChildToContainer = appendInitialChild;
+export const appendChildToContainer = (parent: Container, child: Instance) => {
+	const prevParentId = child.parent;
+
+	if (prevParentId !== -1 && prevParentId !== parent.rootID) {
+		throw new Error('不能重复挂载 child');
+	}
+
+	child.parent = parent.rootID;
+	parent.children.push(child);
+};
 
 export function commitUpdate(fiber: FiberNode) {
 	switch (fiber.tag) {
 		case HostText:
-			const text = fiber.memoizedProps.content;
+			const text = fiber.memoizedProps?.content;
 			return commitTextUpdate(fiber.stateNode as TextInstance, text);
 
 		default:
@@ -76,14 +85,20 @@ export function commitUpdate(fiber: FiberNode) {
 }
 
 export function commitTextUpdate(textInstance: TextInstance, content: string) {
-	textInstance.textContent = content;
+	textInstance.text = content;
 }
 
 export function removeChild(
 	child: Instance | TextInstance,
 	container: Container
 ) {
-	container.removeChild(child);
+	const index = container.children.indexOf(child);
+	if (index === -1) {
+		throw new Error('child 不存在');
+	}
+
+	// 从 container 中移除
+	container.children.splice(index, 1);
 }
 
 export function insertChildToContainer(
@@ -91,7 +106,19 @@ export function insertChildToContainer(
 	container: Container,
 	before: Instance
 ) {
-	container.insertBefore(child, before);
+	const beforeIndex = container.children.indexOf(before);
+	if (beforeIndex === -1) {
+		throw new Error('before 不存在');
+	}
+
+	const index = container.children.indexOf(child);
+	if (index !== -1) {
+		// 从 container 中移除
+		container.children.splice(index, 1);
+	}
+
+	// 插入到指定位置
+	container.children.splice(beforeIndex, 0, child);
 }
 
 export const scheduleMicroTask =
