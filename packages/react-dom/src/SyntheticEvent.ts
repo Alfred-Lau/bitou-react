@@ -4,6 +4,12 @@ react 的合成事件系统
 
 import { Container } from 'hostConfig';
 import { Props } from 'shared/ReactTypes';
+import {
+	unstable_ImmediatePriority,
+	unstable_NormalPriority,
+	unstable_UserBlockingPriority,
+	unstable_runWithPriority
+} from 'scheduler';
 
 export const elementPropsKey = '__props';
 
@@ -71,7 +77,9 @@ function triggerEventFlow(paths: EventCallback[], se: SyntheticEvent) {
 	for (let i = 0; i < paths.length; i++) {
 		const eventCallback = paths[i];
 		// eventCallback(se);
-		eventCallback.call(null, se);
+		unstable_runWithPriority(eventTypeToSchedulerPriprity(se.type), () => {
+			eventCallback.call(null, se);
+		});
 		if (se.__stopPropagation) {
 			// 阻止冒泡
 			break;
@@ -138,4 +146,17 @@ function getEventCallbackNameFromEventType(
 	return {
 		click: ['onClickCapture', 'onClick']
 	}[eventType];
+}
+
+function eventTypeToSchedulerPriprity(eventType: string) {
+	switch (eventType) {
+		case 'click':
+		case 'keydown':
+		case 'keyup':
+			return unstable_ImmediatePriority;
+		case 'scroll':
+			return unstable_UserBlockingPriority;
+		default:
+			return unstable_NormalPriority;
+	}
 }
