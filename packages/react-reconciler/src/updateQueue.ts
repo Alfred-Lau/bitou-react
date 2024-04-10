@@ -1,7 +1,7 @@
 import { Action } from 'shared/ReactTypes';
 import { Update } from './fiberFlags';
 import { Dispatch } from 'react/src/currentDispatcher';
-import { Lane } from './fiberLanes';
+import { Lane, isSubsetOfLanes } from './fiberLanes';
 
 export interface Update<State> {
 	action: Action<State>;
@@ -70,20 +70,22 @@ export const processUpdateQueue = <State>(
 
 		do {
 			const updateLane = pending.lane;
-			if (updateLane === renderLane) {
+			if (!isSubsetOfLanes(renderLane, updateLane)) {
+				// 优先级不够，跳过更新
+				if (__DEV__) {
+					console.log(
+						'processUpdateQueue: 优先级不够，跳过更新,不应该进入',
+						pending
+					);
+				}
+			} else {
+				// 如果优先级足够，执行 action
 				const action = pending.action;
 				// 下面的判断不能使用 typeof action === 'function'，因为 action 可能是一个对象
 				if (action instanceof Function) {
 					baseState = action(baseState);
 				} else {
 					baseState = action;
-				}
-			} else {
-				if (__DEV__) {
-					console.log(
-						'processUpdateQueue: 优先级不够，跳过更新,不应该进入',
-						pending
-					);
 				}
 			}
 			// 从环状链表中取出下一个 update 进行遍历
