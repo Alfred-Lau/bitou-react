@@ -58,15 +58,25 @@ export const processUpdateQueue = <State>(
 	baseState: State,
 	pendingUpdate: Update<State> | null,
 	renderLane: Lane
-): { memoizedState: State } => {
+): {
+	memoizedState: State;
+	baseState: State;
+	baseQueue: Update<State> | null;
+} => {
 	const result: ReturnType<typeof processUpdateQueue<State>> = {
-		memoizedState: baseState
+		memoizedState: baseState,
+		baseState: baseState,
+		baseQueue: null
 	};
 	if (pendingUpdate !== null) {
 		// 第一个 update
 		const first = pendingUpdate.next;
 		// TODO: pending 和 pendingUpdate 有什么区别？ pending 是一个环状链表，pendingUpdate 是一个链表
 		let pending = pendingUpdate.next as Update<any>;
+
+		let newBaseState = baseState;
+		let newBaseQueueFirst: Update<State> | null = null;
+		let newBaseQueueLast: Update<State> | null = null;
 
 		do {
 			const updateLane = pending.lane;
