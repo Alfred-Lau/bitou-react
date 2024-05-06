@@ -1,7 +1,7 @@
 import { Action } from 'shared/ReactTypes';
 import { Update } from './fiberFlags';
 import { Dispatch } from 'react/src/currentDispatcher';
-import { Lane, isSubsetOfLanes } from './fiberLanes';
+import { Lane, NoLane, isSubsetOfLanes } from './fiberLanes';
 
 export interface Update<State> {
 	action: Action<State>;
@@ -77,6 +77,7 @@ export const processUpdateQueue = <State>(
 		let newBaseState = baseState;
 		let newBaseQueueFirst: Update<State> | null = null;
 		let newBaseQueueLast: Update<State> | null = null;
+		let newState = baseState;
 
 		do {
 			const updateLane = pending.lane;
@@ -88,21 +89,49 @@ export const processUpdateQueue = <State>(
 						pending
 					);
 				}
+
+				const clone = createUpdate(pending.action, pending.lane);
+				// 是不是第一个被跳过的 update
+				if (newBaseQueueFirst === null) {
+					newBaseQueueFirst = clone;
+					newBaseQueueLast = clone;
+					newBaseState = newState;
+					// clone.next = clone;
+				} else {
+					newBaseQueueLast!.next = clone;
+					newBaseQueueLast = clone;
+				}
 			} else {
+				if (newBaseQueueLast !== null) {
+					const clone = createUpdate(pending.action, NoLane);
+					newBaseQueueLast.next = clone;
+					newBaseQueueLast = clone;
+				}
 				// 如果优先级足够，执行 action
 				const action = pending.action;
 				// 下面的判断不能使用 typeof action === 'function'，因为 action 可能是一个对象
 				if (action instanceof Function) {
-					baseState = action(baseState);
+					newState = action(baseState);
 				} else {
-					baseState = action;
+					newState = action;
 				}
 			}
 			// 从环状链表中取出下一个 update 进行遍历
 			pending = pending.next as Update<any>;
 		} while (pending !== first);
+
+		if (newBaseQueueLast === null) {
+			// 表示本次计算没有update被跳过
+			newBaseState = newState;
+		} else {
+			// 表示本次计算有update被跳过,需要将最后一个update的next指向第一个update，形成一个环状链表
+			newBaseQueueLast.next = newBaseQueueFirst;
+		}
+
+		result.memoizedState = newState;
+		result.baseState = newBaseState;
+		result.baseQueue = newBaseQueueLast;
 	}
 
-	result.memoizedState = baseState;
 	return result;
 };

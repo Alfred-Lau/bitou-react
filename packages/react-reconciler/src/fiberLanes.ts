@@ -37,7 +37,7 @@ export function getHighestPriorityLane(Lanes: Lanes): Lane {
 
 // 判断优先级是否足够：一个 Lane 是否在 Lanes 中
 export function isSubsetOfLanes(set: Lanes, subset: Lane): boolean {
-	// return (set & subset) === subset;
+	return (set & subset) === subset;
 }
 
 export function markRootFinished(root: FiberRootNode, lane: Lane) {

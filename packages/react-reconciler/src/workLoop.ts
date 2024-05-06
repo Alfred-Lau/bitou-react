@@ -55,7 +55,6 @@ export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
 	const root = markUpdateFromFiberToRoot(fiber);
 	markRootUpdated(root, lane);
 	// 从根节点开始渲染
-	// renderRoot(root);
 	// VIP: 添加调度机制
 	ensureRootIsScheduled(root);
 }
