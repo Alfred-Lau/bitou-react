@@ -79,12 +79,14 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 
 const HooksDispatcherOnMount: Dispatcher = {
 	useState: mountState,
-	useEffect: mountEffect
+	useEffect: mountEffect,
+	useTransition: mountTransition
 };
 
 const HooksDispatcherOnUpdate: Dispatcher = {
 	useState: updateState,
-	useEffect: updateEffect
+	useEffect: updateEffect,
+	useTransition: updateTransition
 };
 
 function mountEffect(create: EffectCallback | void, deps: EffectDeps | void) {
@@ -355,3 +357,7 @@ function updateWorkInProgressHook(): Hook {
 
 	return workInProgressHook;
 }
+
+function mountTransition(): [boolean, (callback: () => void) => void] {}
+
+function updateTransition(): [boolean, (callback: () => void) => void] {}
