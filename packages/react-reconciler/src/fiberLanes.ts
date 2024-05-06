@@ -11,12 +11,13 @@ export type Lane = number;
 export type Lanes = number;
 
 // 非0情况下，数越小，优先级越高
-export const SyncLane = /*              */ 0b0001;
-export const NoLane = /*               */ 0b0000;
-export const NoLanes = /*               */ 0b0000;
-export const InputContinuousLane = /*  连续触发的事件 */ 0b0010;
-export const DefaultLane = /*           */ 0b0100;
-export const IdleLane = /*              */ 0b1000;
+export const NoLane = /*               */ 0b00000;
+export const NoLanes = /*               */ 0b00000;
+export const SyncLane = /*              */ 0b00001;
+export const InputContinuousLane = /*  连续触发的事件 */ 0b00010;
+export const DefaultLane = /*           */ 0b00100;
+export const TransitionLane = /*        */ 0b01000;
+export const IdleLane = /*              */ 0b10000;
 
 // 优先级相关的 lane
 export function mergeLanes(a: Lane, b: Lane): Lanes {
