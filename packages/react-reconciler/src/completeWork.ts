@@ -15,7 +15,7 @@ import {
 	HostRoot,
 	HostText
 } from './workTags';
-import { NoFlags, Update } from './fiberFlags';
+import { NoFlags, Ref, Update } from './fiberFlags';
 // import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
 
 function markUpdate(fiber: FiberNode) {
@@ -35,6 +35,11 @@ export const completeWork = (wip: FiberNode) => {
 				// 判断 props 是否变化
 				// FIXME: 这里只是简单的判断 props 是否变化，实际上还需要判断 props 的每一个属性是否变化
 				markUpdate(wip);
+
+				// 标记 ref
+				if (current.ref !== wip.ref) {
+					markRef(wip);
+				}
 				// updateFiberProps(wip.stateNode, newProps);
 			} else {
 				// 首屏渲染，构建离屏 dom
@@ -42,6 +47,11 @@ export const completeWork = (wip: FiberNode) => {
 				const instance = createInstance(wip.type, newProps); // 宿主环境的实例
 				appendAllChild(instance, wip);
 				wip.stateNode = instance;
+
+				// 标记 ref
+				if (wip.ref !== null) {
+					markRef(wip);
+				}
 			}
 			bubbleProperties(wip);
 			return null;
@@ -118,4 +128,8 @@ function bubbleProperties(wip: FiberNode) {
 	}
 
 	wip.subtreeFlags |= subtreeFlags;
+}
+
+function markRef(fiber: FiberNode) {
+	fiber.flags |= Ref;
 }

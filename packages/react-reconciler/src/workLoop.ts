@@ -1,6 +1,6 @@
 import { scheduleMicroTask } from 'hostConfig';
 import { beginWork } from './beginWork';
-import { commitMutationEffects } from './commitWork';
+import { commitLayoutEffects, commitMutationEffects } from './commitWork';
 import { completeWork } from './completeWork';
 import {
 	FiberNode,
@@ -291,12 +291,14 @@ function commitRoot(root: FiberRootNode) {
 		(finishedWork.flags & (MutationMask | PassiveMask)) !== NoFlags;
 
 	if (subtreeHasEffect || rootHasEffect) {
-		// beforeMutation
-		// mutation
-
-		// 把生成的fiber 树赋值给 current
+		//1/3 beforeMutation
+		//2/3 mutation
 		commitMutationEffects(finishedWork, root);
+		// 把生成的fiber 树赋值给 current
 		root.current = finishedWork;
+
+		// 3/3 layout
+		commitLayoutEffects(finishedWork, root);
 		// layout
 	} else {
 		// 没有副作用
@@ -396,7 +398,7 @@ function workLoopConcurrent() {
 function performUnitOfWork(fiber: FiberNode) {
 	// 递阶段 next 是fiber 的第一个子节点
 	const next = beginWork(fiber, wipRootRenderLane);
-	fiber.memoizedProps = fiber.pendingProps;
+	fiber.memoizedProps = fiber.pendingProps!;
 
 	if (next === null) {
 		// 归阶段

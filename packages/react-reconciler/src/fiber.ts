@@ -36,6 +36,8 @@ export class FiberNode {
 	alternative: FiberNode | null;
 	flags: FiberFlags;
 	subtreeFlags: FiberFlags;
+
+	lanes: Lanes;
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
 		this.key = key || null;
@@ -67,6 +69,8 @@ export class FiberNode {
 		this.flags = NoFlags;
 		// 子树包含的副作用
 		this.subtreeFlags = NoFlags;
+
+		this.lanes = NoLanes;
 	}
 }
 
@@ -127,11 +131,17 @@ export const createWorkInProgress = (
 	wip.child = current.child;
 	wip.memoizedProps = current.memoizedProps;
 	wip.memoizedState = current.memoizedState;
+
+	wip.lanes = current.lanes;
+	wip.ref = current.ref;
 	return wip;
 };
 
-export function createFiberFromElement(element: ReactElementType) {
-	const { type, key, props } = element;
+export function createFiberFromElement(
+	element: ReactElementType,
+	lanes: Lanes
+) {
+	const { type, key, props, ref } = element;
 	let fiberTag: WorkTag = FunctionComponent;
 
 	if (typeof type === 'string') {
@@ -143,10 +153,17 @@ export function createFiberFromElement(element: ReactElementType) {
 
 	const fiber = new FiberNode(fiberTag, props, key);
 	fiber.type = type;
+	fiber.ref = ref;
+	fiber.lanes = lanes;
 	return fiber;
 }
 
-export function createFiberFromFragment(elements: any[], key: Key): FiberNode {
+export function createFiberFromFragment(
+	elements: any[],
+	lanes: Lanes,
+	key: Key
+): FiberNode {
 	const fiber = new FiberNode(Fragment, elements, key);
+	fiber.lanes = lanes;
 	return fiber;
 }

@@ -8,6 +8,7 @@ import {
 import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbols';
 import { Fragment, HostText } from './workTags';
 import { ChildDeletion, Placement } from './fiberFlags';
+import { Lanes } from './fiberLanes';
 
 type ExistingChildren = Map<string | number, FiberNode>;
 
@@ -49,7 +50,8 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 	function reconcileSingleElement(
 		returnFiber: FiberNode,
 		currentFiber: FiberNode | null,
-		element: ReactElementType
+		element: ReactElementType,
+		lanes: Lanes
 	) {
 		const key = element.key;
 		while (currentFiber !== null) {
@@ -88,9 +90,9 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 
 		let fiber;
 		if (element.type === REACT_FRAGMENT_TYPE) {
-			fiber = createFiberFromFragment(element.props.children, key);
+			fiber = createFiberFromFragment(element.props.children, lanes, key);
 		} else {
-			fiber = createFiberFromElement(element);
+			fiber = createFiberFromElement(element, lanes);
 		}
 		fiber!.return = returnFiber;
 		return fiber;
@@ -210,7 +212,8 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		returnFiber: FiberNode,
 		existingChildren: ExistingChildren,
 		index: number,
-		element: any
+		element: any,
+		lanes: Lanes
 	): FiberNode | null {
 		const keyToUse = element.key !== null ? element.key : index;
 		const before = existingChildren.get(keyToUse);
@@ -236,6 +239,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 							returnFiber,
 							before,
 							element,
+							lanes,
 							keyToUse,
 							existingChildren
 						);
@@ -246,7 +250,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 							return useFiber(before, element.props);
 						}
 					}
-					return createFiberFromElement(element);
+					return createFiberFromElement(element, lanes);
 
 				default:
 					break;
@@ -259,6 +263,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 				returnFiber,
 				before,
 				element,
+				lanes,
 				keyToUse,
 				existingChildren
 			);
@@ -271,7 +276,8 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 	return function reconcilerChildFibers(
 		returnFiber: FiberNode,
 		currentFiber: FiberNode | null,
-		newChild?: any
+		newChild: any,
+		lanes: Lanes
 	) {
 		const isUnkeyedTopLevelFragment =
 			typeof newChild === 'object' &&
@@ -292,7 +298,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 			switch (newChild?.$$typeof) {
 				case REACT_ELEMENT_TYPE:
 					return placeSingleChild(
-						reconcileSingleElement(returnFiber, currentFiber, newChild)!
+						reconcileSingleElement(returnFiber, currentFiber, newChild, lanes)!
 					);
 
 				default:
@@ -335,12 +341,13 @@ function updateFragment(
 	returnFiber: FiberNode,
 	current: FiberNode | undefined,
 	elements: any[],
+	lanes: Lanes,
 	key: Key,
 	existingChildren: ExistingChildren
 ) {
 	let fiber;
 	if (!current || current.tag !== Fragment) {
-		fiber = createFiberFromFragment(elements, key);
+		fiber = createFiberFromFragment(elements, lanes, key);
 	} else {
 		existingChildren.delete(key);
 		fiber = useFiber(current, elements);

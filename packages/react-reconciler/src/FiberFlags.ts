@@ -5,6 +5,7 @@ export const Placement = /*                */ 0b00000000000000000001;
 export const Update = /*                       */ 0b00000000000000000010;
 export const ChildDeletion = /*                    */ 0b00000000000000000100;
 export const PassiveEffect = /*                       */ 0b00000000000000001000;
+export const Ref = /*                          */ 0b00000000000000010000;
 
 export type FiberFlags =
 	| typeof NoFlags
@@ -12,5 +13,6 @@ export type FiberFlags =
 	| typeof Placement
 	| typeof Update;
 
-export const MutationMask = Placement | ChildDeletion | Update;
+export const MutationMask = Placement | ChildDeletion | Update | Ref;
+export const LayoutMask = Ref;
 export const PassiveMask = PassiveEffect | ChildDeletion;
