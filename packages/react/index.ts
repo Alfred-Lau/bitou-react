@@ -2,6 +2,7 @@ import currentDispatcher, {
 	Dispatcher,
 	resolveDispatch
 } from './src/currentDispatcher';
+import currentBatchConfig from './src/currentBatchConfig';
 import { jsx, isValidElement as RawIsValidElement } from './src/jsx';
 export { REACT_FRAGMENT_TYPE as Fragment } from 'shared/ReactSymbols';
 
@@ -22,7 +23,8 @@ export const useTransition: Dispatcher['useTransition'] = () => {
 
 // 内部数据共享层
 export const __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
-	currentDispatcher
+	currentDispatcher,
+	currentBatchConfig
 };
 
 export const version = '0.0.0';

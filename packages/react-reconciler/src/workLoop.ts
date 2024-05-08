@@ -89,12 +89,16 @@ function ensureRootIsScheduled(root: FiberRootNode) {
 
 	let newCallbackNode = null;
 
+	if (__DEV__) {
+		console.log(
+			`在${updateLane === SyncLane ? '微' : '宏'}任务中调度，优先级:`,
+			updateLane
+		);
+	}
+
 	// 不同的更新优先级，使用不同的调度方式【重运行时】
 	if (updateLane === SyncLane) {
 		// 同步更新,使用微任务进行调度
-		if (__DEV__) {
-			console.log('在微任务中调度，优先级', updateLane);
-		}
 
 		// 多次更新，批处理调度的方式
 		scheduleSyncCallback(performSyncWorkOnRoot.bind(null, root));
@@ -384,7 +388,7 @@ function workLoopSync() {
 }
 
 function workLoopConcurrent() {
-	while (workInProgress !== null && !unstable_shouldYield) {
+	while (workInProgress !== null && !unstable_shouldYield()) {
 		performUnitOfWork(workInProgress);
 	}
 }

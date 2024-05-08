@@ -14,6 +14,7 @@ import { scheduleUpdateOnFiber } from './workLoop';
 import { Lane, NoLane, requestUpdateLane } from './fiberLanes';
 import { Flags, PassiveEffect } from './fiberFlags';
 import { HookHasEffect, Passsive } from './hookEffectTags';
+import currentBatchConfig from 'react/src/currentBatchConfig';
 
 let currentlyRenderingFiber: FiberNode | null = null;
 let workInProgressHook: Hook | null = null;
@@ -219,17 +220,17 @@ function updateState<State>(): [State, Dispatch<State>] {
 		baseQueue = pending;
 		current.baseQueue = pending;
 		queue.shared.pending = null;
+	}
 
-		if (baseQueue !== null) {
-			const {
-				memoizedState,
-				baseQueue: newBaseQueue,
-				baseState: newBaseState
-			} = processUpdateQueue(baseState, baseQueue, renderLane);
-			hook.memorizedState = memoizedState;
-			hook.baseState = newBaseState;
-			hook.baseQueue = newBaseQueue;
-		}
+	if (baseQueue !== null) {
+		const {
+			memoizedState,
+			baseQueue: newBaseQueue,
+			baseState: newBaseState
+		} = processUpdateQueue(baseState, baseQueue, renderLane);
+		hook.memorizedState = memoizedState;
+		hook.baseState = newBaseState;
+		hook.baseQueue = newBaseQueue;
 	}
 
 	return [hook.memorizedState, queue.dispatch as Dispatch<State>];
@@ -253,6 +254,7 @@ function mountState<State>(
 	hook.updateQueue = queue;
 	// 2. 将当前 useState 对应的 hook数据的 memorizedState 指向 useState 的 initialState
 	hook.memorizedState = memoizedState;
+	hook.baseState = memoizedState;
 
 	// @ts-ignore
 	const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
@@ -358,6 +360,31 @@ function updateWorkInProgressHook(): Hook {
 	return workInProgressHook;
 }
 
-function mountTransition(): [boolean, (callback: () => void) => void] {}
+function mountTransition(): [boolean, (callback: () => void) => void] {
+	const [isPending, setPending] = mountState(false);
+	const hook = mountWorkInProgressHook();
 
-function updateTransition(): [boolean, (callback: () => void) => void] {}
+	const start = startTransition.bind(null, setPending);
+	hook.memorizedState = start;
+
+	return [isPending, start];
+}
+
+function updateTransition(): [boolean, (callback: () => void) => void] {
+	const [isPending] = updateState<boolean>();
+	const hook = updateWorkInProgressHook();
+	const start = hook.memorizedState;
+	return [isPending, start];
+}
+
+function startTransition(setPending: Dispatch<boolean>, callback: () => void) {
+	// 触发高优先级的更新
+	setPending(true);
+	const prevTransition = currentBatchConfig.transition;
+	// 1. 优先级提升
+	currentBatchConfig.transition = 1;
+	callback();
+	setPending(false);
+	// 2. 优先级恢复
+	currentBatchConfig.transition = prevTransition;
+}

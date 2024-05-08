@@ -6,6 +6,7 @@ import {
 	unstable_getCurrentPriorityLevel
 } from 'scheduler';
 import { FiberRootNode } from './fiber';
+import ReactCurrentBatchConfig from 'react/src/currentBatchConfig';
 
 export type Lane = number;
 export type Lanes = number;
@@ -25,7 +26,13 @@ export function mergeLanes(a: Lane, b: Lane): Lanes {
 }
 
 export function requestUpdateLane(): Lane {
-	// 优先级相关的 lane
+	const isTransition = ReactCurrentBatchConfig.transition !== null;
+
+	if (isTransition) {
+		return TransitionLane;
+	}
+
+	// 从上下文中获取当前的 scheduler 优先级
 	const currentSchedulerPriority = unstable_getCurrentPriorityLevel();
 	const lane = schedulerPriorityToLane(currentSchedulerPriority);
 	return lane;
