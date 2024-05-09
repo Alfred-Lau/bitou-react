@@ -5,6 +5,7 @@ import currentDispatcher, {
 import currentBatchConfig from './src/currentBatchConfig';
 import { jsx, isValidElement as RawIsValidElement } from './src/jsx';
 export { REACT_FRAGMENT_TYPE as Fragment } from 'shared/ReactSymbols';
+export { createContext } from './src/context';
 
 export const useState: Dispatcher['useState'] = (initialState) => {
 	const dispatcher = resolveDispatch();
@@ -24,6 +25,11 @@ export const useTransition: Dispatcher['useTransition'] = () => {
 export const useRef: Dispatcher['useRef'] = (initialValue) => {
 	const dispatcher = resolveDispatch();
 	return dispatcher.useRef(initialValue);
+};
+
+export const useContext: Dispatcher['useContext'] = (context) => {
+	const dispatcher = resolveDispatch();
+	return dispatcher.useContext(context);
 };
 
 // 内部数据共享层

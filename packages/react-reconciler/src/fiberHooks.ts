@@ -9,7 +9,7 @@ import {
 	enqueueUpdate,
 	processUpdateQueue
 } from './updateQueue';
-import { Action } from 'shared/ReactTypes';
+import { Action, ReactContext } from 'shared/ReactTypes';
 import { scheduleUpdateOnFiber } from './workLoop';
 import { Lane, NoLane, requestUpdateLane } from './fiberLanes';
 import { Flags, PassiveEffect } from './fiberFlags';
@@ -82,14 +82,16 @@ const HooksDispatcherOnMount: Dispatcher = {
 	useState: mountState,
 	useEffect: mountEffect,
 	useTransition: mountTransition,
-	useRef: mountRef
+	useRef: mountRef,
+	useContext: readContext
 };
 
 const HooksDispatcherOnUpdate: Dispatcher = {
 	useState: updateState,
 	useEffect: updateEffect,
 	useTransition: updateTransition,
-	useRef: updateRef
+	useRef: updateRef,
+	useContext: readContext
 };
 
 function mountEffect(create: EffectCallback | void, deps: EffectDeps | void) {
@@ -404,4 +406,18 @@ function mountRef<T>(initialValue: T): { current: T } {
 function updateRef<T>(): { current: T } {
 	const hook = updateWorkInProgressHook();
 	return hook.memorizedState;
+}
+
+function readContext<T>(context: ReactContext<T>): T {
+	//！！！ 因为没有使用单向链表，所以useContext 是可以在if 语句中使用的
+	const consumer = currentlyRenderingFiber;
+	if (consumer === null) {
+		// 规避在函数组件外部调用 hook
+		throw new Error(
+			'context can only be called inside of the body of a function component.'
+		);
+	}
+
+	const value = context._currentValue;
+	return value;
 }

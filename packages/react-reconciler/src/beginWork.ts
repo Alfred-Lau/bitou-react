@@ -14,6 +14,7 @@ import { mountChildFibers, reconcilerChildFibers } from './childFiber';
 import { renderWithHooks } from './fiberHooks';
 import { Lanes } from './fiberLanes';
 import { Ref } from './fiberFlags';
+import { pushProvider } from './fiberContext';
 
 export const beginWork = (fiber: FiberNode, renderLanes: Lanes) => {
 	// 比较，返回子 FiberNode
@@ -47,7 +48,8 @@ function updateContextProvider(wip: FiberNode, renderLanes: Lanes) {
 
 	const nextProps = wip.pendingProps;
 
-	// TODO: 更新 context 的 value
+	//  更新 context 的 value
+	pushProvider(context, nextProps?.value);
 
 	const nextChildren = nextProps?.children;
 	reconcilerChildren(wip, nextChildren, renderLanes);

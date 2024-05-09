@@ -17,6 +17,7 @@ import {
 	HostText
 } from './workTags';
 import { NoFlags, Ref, Update } from './fiberFlags';
+import { popProvider } from './fiberContext';
 // import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
 
 function markUpdate(fiber: FiberNode) {
@@ -79,6 +80,7 @@ export const completeWork = (wip: FiberNode) => {
 			bubbleProperties(wip);
 			return null;
 		case ContextProvider:
+			popProvider(wip.type._context);
 			bubbleProperties(wip);
 			return;
 		default:
