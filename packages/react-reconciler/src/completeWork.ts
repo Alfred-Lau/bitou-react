@@ -9,6 +9,7 @@ import {
 } from 'hostConfig';
 import { FiberNode } from './fiber';
 import {
+	ContextProvider,
 	Fragment,
 	FunctionComponent,
 	HostComponent,
@@ -77,7 +78,9 @@ export const completeWork = (wip: FiberNode) => {
 		case FunctionComponent:
 			bubbleProperties(wip);
 			return null;
-
+		case ContextProvider:
+			bubbleProperties(wip);
+			return;
 		default:
 			if (__DEV__) {
 				console.warn('completeWork: 未知的 fiber tag', wip);

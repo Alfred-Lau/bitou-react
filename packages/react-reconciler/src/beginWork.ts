@@ -3,6 +3,7 @@ import { ReactElementType } from 'shared/ReactTypes';
 import { FiberNode } from './fiber';
 import { UpdateQueue, processUpdateQueue } from './updateQueue';
 import {
+	ContextProvider,
 	Fragment,
 	FunctionComponent,
 	HostComponent,
@@ -29,6 +30,8 @@ export const beginWork = (fiber: FiberNode, renderLanes: Lanes) => {
 			return updateFunctionComponent(fiber, renderLanes);
 		case Fragment:
 			return updateFragment(fiber, renderLanes);
+		case ContextProvider:
+			return updateContextProvider(fiber, renderLanes);
 		default:
 			if (__DEV__) {
 				console.warn('beginWork: 未知的 fiber tag', fiber.tag);
@@ -37,6 +40,19 @@ export const beginWork = (fiber: FiberNode, renderLanes: Lanes) => {
 
 	return null;
 };
+
+function updateContextProvider(wip: FiberNode, renderLanes: Lanes) {
+	const providerType = wip.type;
+	const context = providerType._context;
+
+	const nextProps = wip.pendingProps;
+
+	// TODO: 更新 context 的 value
+
+	const nextChildren = nextProps?.children;
+	reconcilerChildren(wip, nextChildren, renderLanes);
+	return wip.child;
+}
 
 function updateFragment(wip: FiberNode, renderLanes: Lanes) {
 	const nextChildren = wip.pendingProps;

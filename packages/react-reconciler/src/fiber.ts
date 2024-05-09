@@ -1,5 +1,6 @@
 import { Key, Props, ReactElementType } from 'shared/ReactTypes';
 import {
+	ContextProvider,
 	Fragment,
 	FunctionComponent,
 	HostComponent,
@@ -10,6 +11,7 @@ import { Container } from 'hostConfig';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
 import { Effect } from './fiberHooks';
 import { CallbackNode } from 'scheduler';
+import { REACT_PROVIDER_TYPE } from 'shared/ReactSymbols';
 
 export interface PendingPassiveEffects {
 	unmount: Effect[];
@@ -147,6 +149,12 @@ export function createFiberFromElement(
 	if (typeof type === 'string') {
 		// <div /> type:string
 		fiberTag = HostComponent;
+	} else if (
+		typeof type === 'object' &&
+		type.$$typeof === REACT_PROVIDER_TYPE
+	) {
+		// <Context.Provider /> type:object
+		fiberTag = ContextProvider;
 	} else if (typeof type !== 'function' && __DEV__) {
 		console.warn('createFiberFromElement: 未知的类型', element);
 	}
