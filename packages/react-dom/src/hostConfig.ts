@@ -1,7 +1,14 @@
 import { FiberNode } from 'react-reconciler/src/fiber';
-import { HostComponent, HostText } from 'react-reconciler/src/workTags';
-import { DOMElement, updateFiberProps } from './SyntheticEvent';
+import {
+  HostComponent,
+  HostText,
+} from 'react-reconciler/src/workTags';
 import { Props } from 'shared/ReactTypes';
+
+import {
+  DOMElement,
+  updateFiberProps,
+} from './SyntheticEvent';
 
 // Element 和 Text 是 DOM 的原生类型
 export type Container = Element;
@@ -74,3 +81,21 @@ export const scheduleMicroTask =
 			? (callback: (...args: any) => void) =>
 					Promise.resolve(null).then(callback)
 			: setTimeout;
+
+export function hideInstance(instance: Instance) {
+	const style = (instance as HTMLElement).style;
+	style.setProperty('display', 'none', 'important');
+}
+
+export function unhideInstance(instance: Instance) {
+	const style = (instance as HTMLElement).style;
+	style.removeProperty('display');
+}
+
+export function hideTextInstance(textInstance: TextInstance) {
+	textInstance.nodeValue = '';
+}
+
+export function unhideTextInstance(textInstance: TextInstance, text: string) {
+	textInstance.nodeValue = text;
+}

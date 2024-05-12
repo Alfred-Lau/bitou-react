@@ -1,31 +1,45 @@
 import {
-	Container,
-	Instance,
-	appendChildToContainer,
-	commitUpdate,
-	insertChildToContainer,
-	removeChild
+  appendChildToContainer,
+  commitUpdate,
+  Container,
+  hideInstance,
+  hideTextInstance,
+  insertChildToContainer,
+  Instance,
+  removeChild,
+  unhideInstance,
+  unhideTextInstance,
 } from 'hostConfig';
-import { FiberNode, FiberRootNode, PendingPassiveEffects } from './fiber';
+
 import {
-	ChildDeletion,
-	Flags,
-	LayoutMask,
-	MutationMask,
-	NoFlags,
-	PassiveEffect,
-	PassiveMask,
-	Placement,
-	Ref,
-	Update
+  FiberNode,
+  FiberRootNode,
+  PendingPassiveEffects,
+} from './fiber';
+import {
+  ChildDeletion,
+  Flags,
+  LayoutMask,
+  MutationMask,
+  NoFlags,
+  PassiveEffect,
+  PassiveMask,
+  Placement,
+  Ref,
+  Update,
+  Visibility,
 } from './fiberFlags';
 import {
-	FunctionComponent,
-	HostComponent,
-	HostRoot,
-	HostText
+  Effect,
+  FCUpdateQueue,
+} from './fiberHooks';
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+  OffscreenComponent,
 } from './workTags';
-import { Effect, FCUpdateQueue } from './fiberHooks';
 
 let nextEffect: FiberNode | null = null;
 
@@ -70,7 +84,80 @@ const commitMutationEffectsOnFiber = (
 		// 解绑旧的 ref
 		safelyDetachRef(finishedWork);
 	}
+
+	// 处理 suspense visibility flag
+	if ((flags & Visibility) !== NoFlags && tag === OffscreenComponent) {
+		const isHidden = finishedWork.pendingProps!.mode === 'hidden';
+		// 移除 visibility
+		hideOrUnhideAllChildren(finishedWork, isHidden);
+		finishedWork.flags &= ~Visibility;
+	}
 };
+
+function hideOrUnhideAllChildren(finishedWork: FiberNode, isHidden: boolean) {
+	findHostSubtreeRoot(finishedWork, (hostRoot) => {
+		const instance = hostRoot.stateNode;
+		if (hostRoot.tag === HostComponent) {
+			isHidden ? hideInstance(instance) : unhideInstance(instance);
+		} else if (hostRoot.tag === HostText) {
+			isHidden
+				? hideTextInstance(instance)
+				: unhideTextInstance(instance, hostRoot.memoizedProps.content);
+		}
+	});
+}
+
+function findHostSubtreeRoot(
+	finishedWork: FiberNode,
+	callback: (hostSubtreeRoot: FiberNode) => void
+) {
+	let node = finishedWork;
+	let hostSubtreeRoot = null;
+	while (true) {
+		//todo: 处理 HostRoot
+		if (node.tag === HostComponent) {
+			if (hostSubtreeRoot === null) {
+				hostSubtreeRoot = node;
+				callback(node);
+			}
+		} else if (node.tag === HostText) {
+			if (hostSubtreeRoot === null) {
+				callback(node);
+			}
+		} else if (
+			node.tag === OffscreenComponent &&
+			node.pendingProps!.mode === 'hidden' &&
+			node !== finishedWork
+		) {
+			// 什么都不做,针对的是 suspense嵌套的情况
+		} else if (node.child !== null) {
+			node.child.return = node;
+			node = node.child;
+			continue;
+		}
+
+		if (node === finishedWork) {
+			return;
+		}
+
+		while (node.sibling === null) {
+			if (node.return === null || node.return === finishedWork) {
+				return;
+			}
+			if (hostSubtreeRoot === node) {
+				hostSubtreeRoot = null;
+			}
+			node = node.return;
+		}
+
+		if (hostSubtreeRoot === node) {
+			hostSubtreeRoot = null;
+		}
+
+		node.sibling!.return = node.return;
+		node = node.sibling;
+	}
+}
 
 function safelyDetachRef(current: FiberNode) {
 	const ref = current.ref;

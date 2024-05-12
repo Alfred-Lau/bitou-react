@@ -1,23 +1,32 @@
 // dfs 递归中的归阶段
 
 import {
-	Container,
-	Instance,
-	appendInitialChild,
-	createInstance,
-	createTextInstance
+  appendInitialChild,
+  Container,
+  createInstance,
+  createTextInstance,
+  Instance,
 } from 'hostConfig';
+
 import { FiberNode } from './fiber';
-import {
-	ContextProvider,
-	Fragment,
-	FunctionComponent,
-	HostComponent,
-	HostRoot,
-	HostText
-} from './workTags';
-import { NoFlags, Ref, Update } from './fiberFlags';
 import { popProvider } from './fiberContext';
+import {
+  NoFlags,
+  Ref,
+  Update,
+  Visibility,
+} from './fiberFlags';
+import {
+  ContextProvider,
+  Fragment,
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+  OffscreenComponent,
+  SuspenseComponent,
+} from './workTags';
+
 // import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
 
 function markUpdate(fiber: FiberNode) {
@@ -77,12 +86,32 @@ export const completeWork = (wip: FiberNode) => {
 		case HostRoot:
 		case Fragment:
 		case FunctionComponent:
+		case OffscreenComponent:
 			bubbleProperties(wip);
 			return null;
 		case ContextProvider:
 			popProvider(wip.type._context);
 			bubbleProperties(wip);
-			return;
+			return null;
+		case SuspenseComponent:
+			// TODO:
+			const offscreenFiber = wip.child as FiberNode;
+			const isHidden = offscreenFiber.pendingProps!.mode === 'hidden';
+			const currentOffscreenFiber = offscreenFiber.alternative;
+
+			if (currentOffscreenFiber !== null) {
+				// update
+				const wasHidden = currentOffscreenFiber.pendingProps!.mode === 'hidden';
+				if (wasHidden !== isHidden) {
+					offscreenFiber.flags |= Visibility;
+					bubbleProperties;
+				}
+			} else if (isHidden) {
+				offscreenFiber.flags |= Visibility;
+				bubbleProperties(offscreenFiber);
+			}
+			bubbleProperties(wip);
+			return null;
 		default:
 			if (__DEV__) {
 				console.warn('completeWork: 未知的 fiber tag', wip);
