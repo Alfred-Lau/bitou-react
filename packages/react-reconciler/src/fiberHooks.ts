@@ -1,20 +1,41 @@
-import { Dispatch, Dispatcher } from 'react/src/currentDispatcher';
-import { FiberNode } from './fiber';
-import internals from 'shared/internals';
-import {
-	Update,
-	UpdateQueue,
-	createUpdate,
-	createUpdateQueue,
-	enqueueUpdate,
-	processUpdateQueue
-} from './updateQueue';
-import { Action, ReactContext } from 'shared/ReactTypes';
-import { scheduleUpdateOnFiber } from './workLoop';
-import { Lane, NoLane, requestUpdateLane } from './fiberLanes';
-import { Flags, PassiveEffect } from './fiberFlags';
-import { HookHasEffect, Passsive } from './hookEffectTags';
 import currentBatchConfig from 'react/src/currentBatchConfig';
+import {
+  Dispatch,
+  Dispatcher,
+} from 'react/src/currentDispatcher';
+import internals from 'shared/internals';
+import { REACT_CONTEXT_TYPE } from 'shared/ReactSymbols';
+import {
+  Action,
+  ReactContext,
+  Thenable,
+  Usable,
+} from 'shared/ReactTypes';
+
+import { FiberNode } from './fiber';
+import {
+  Flags,
+  PassiveEffect,
+} from './fiberFlags';
+import {
+  Lane,
+  NoLane,
+  requestUpdateLane,
+} from './fiberLanes';
+import {
+  HookHasEffect,
+  Passsive,
+} from './hookEffectTags';
+import { trackUsedThenable } from './thenable';
+import {
+  createUpdate,
+  createUpdateQueue,
+  enqueueUpdate,
+  processUpdateQueue,
+  Update,
+  UpdateQueue,
+} from './updateQueue';
+import { scheduleUpdateOnFiber } from './workLoop';
 
 let currentlyRenderingFiber: FiberNode | null = null;
 let workInProgressHook: Hook | null = null;
@@ -83,7 +104,8 @@ const HooksDispatcherOnMount: Dispatcher = {
 	useEffect: mountEffect,
 	useTransition: mountTransition,
 	useRef: mountRef,
-	useContext: readContext
+	useContext: readContext,
+	use
 };
 
 const HooksDispatcherOnUpdate: Dispatcher = {
@@ -91,7 +113,8 @@ const HooksDispatcherOnUpdate: Dispatcher = {
 	useEffect: updateEffect,
 	useTransition: updateTransition,
 	useRef: updateRef,
-	useContext: readContext
+	useContext: readContext,
+	use
 };
 
 function mountEffect(create: EffectCallback | void, deps: EffectDeps | void) {
@@ -420,4 +443,20 @@ function readContext<T>(context: ReactContext<T>): T {
 
 	const value = context._currentValue;
 	return value;
+}
+
+function use<T>(usable: Usable<T>): T {
+	if (usable !== null && typeof usable === 'object') {
+		if (typeof (usable as Thenable<T>).then === 'function') {
+			// thenable
+			const thenable = usable as Thenable<T>;
+			return trackUsedThenable(thenable);
+		} else if ((usable as ReactContext<T>).$$typeof === REACT_CONTEXT_TYPE) {
+			// context
+			const context = usable as ReactContext<T>;
+			return readContext(context);
+		}
+	}
+
+	throw new Error('当前不支持的 use 参数');
 }
