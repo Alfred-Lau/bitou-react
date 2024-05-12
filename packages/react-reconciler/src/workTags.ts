@@ -8,6 +8,10 @@ export const HostText = 6;
 export const Fragment = 7;
 // context
 export const ContextProvider = 8;
+// suspense
+export const SuspenseComponent = 13;
+// offscreen
+export const OffscreenComponent = 14;
 
 export type WorkTag =
 	| typeof FunctionComponent
@@ -15,4 +19,6 @@ export type WorkTag =
 	| typeof HostComponent
 	| typeof HostText
 	| typeof Fragment
-	| typeof ContextProvider;
+	| typeof ContextProvider
+	| typeof SuspenseComponent
+	| typeof OffscreenComponent;

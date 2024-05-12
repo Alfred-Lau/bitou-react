@@ -1,10 +1,17 @@
-import currentDispatcher, {
-	Dispatcher,
-	resolveDispatch
-} from './src/currentDispatcher';
 import currentBatchConfig from './src/currentBatchConfig';
-import { jsx, isValidElement as RawIsValidElement } from './src/jsx';
-export { REACT_FRAGMENT_TYPE as Fragment } from 'shared/ReactSymbols';
+import currentDispatcher, {
+  Dispatcher,
+  resolveDispatch,
+} from './src/currentDispatcher';
+import {
+  isValidElement as RawIsValidElement,
+  jsx,
+} from './src/jsx';
+
+export {
+  REACT_FRAGMENT_TYPE as Fragment,
+  REACT_SUSPENSE_TYPE as Suspense,
+} from 'shared/ReactSymbols';
 export { createContext } from './src/context';
 
 export const useState: Dispatcher['useState'] = (initialState) => {

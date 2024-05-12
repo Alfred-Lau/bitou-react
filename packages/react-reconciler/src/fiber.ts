@@ -1,21 +1,44 @@
-import { Key, Props, ReactElementType } from 'shared/ReactTypes';
-import {
-	ContextProvider,
-	Fragment,
-	FunctionComponent,
-	HostComponent,
-	WorkTag
-} from './workTags';
-import { FiberFlags, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
-import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
-import { Effect } from './fiberHooks';
 import { CallbackNode } from 'scheduler';
-import { REACT_PROVIDER_TYPE } from 'shared/ReactSymbols';
+import {
+  REACT_PROVIDER_TYPE,
+  REACT_SUSPENSE_TYPE,
+} from 'shared/ReactSymbols';
+import {
+  Key,
+  Props,
+  ReactElementType,
+} from 'shared/ReactTypes';
+
+import {
+  FiberFlags,
+  NoFlags,
+} from './fiberFlags';
+import { Effect } from './fiberHooks';
+import {
+  Lane,
+  Lanes,
+  NoLane,
+  NoLanes,
+} from './fiberLanes';
+import {
+  ContextProvider,
+  Fragment,
+  FunctionComponent,
+  HostComponent,
+  OffscreenComponent,
+  SuspenseComponent,
+  WorkTag,
+} from './workTags';
 
 export interface PendingPassiveEffects {
 	unmount: Effect[];
 	update: Effect[];
+}
+
+export interface OffscreenProps {
+	mode: 'visible' | 'hidden';
+	children: any;
 }
 
 export class FiberNode {
@@ -155,6 +178,11 @@ export function createFiberFromElement(
 	) {
 		// <Context.Provider /> type:object
 		fiberTag = ContextProvider;
+	} else if (
+		typeof type === 'object' &&
+		type.$$typeof === REACT_SUSPENSE_TYPE
+	) {
+		fiberTag = SuspenseComponent;
 	} else if (typeof type !== 'function' && __DEV__) {
 		console.warn('createFiberFromElement: 未知的类型', element);
 	}
@@ -173,5 +201,10 @@ export function createFiberFromFragment(
 ): FiberNode {
 	const fiber = new FiberNode(Fragment, elements, key);
 	fiber.lanes = lanes;
+	return fiber;
+}
+
+export function createFiberFromOffscreen(pendingProps: OffscreenProps) {
+	const fiber = new FiberNode(OffscreenComponent, pendingProps, null);
 	return fiber;
 }
