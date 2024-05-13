@@ -1,33 +1,37 @@
 import { scheduleMicroTask } from 'hostConfig';
+import {
+	unstable_cancelCallback,
+	unstable_NormalPriority as NormalPriority,
+	unstable_scheduleCallback as scheduleCallback,
+	unstable_shouldYield
+} from 'scheduler';
+
 import { beginWork } from './beginWork';
 import { commitLayoutEffects, commitMutationEffects } from './commitWork';
 import { completeWork } from './completeWork';
 import {
+	createWorkInProgress,
 	FiberNode,
 	FiberRootNode,
-	PendingPassiveEffects,
-	createWorkInProgress
+	PendingPassiveEffects
 } from './fiber';
 import { Flags, MutationMask, NoFlags, PassiveMask } from './fiberFlags';
+import { Effect, resetHooksOnUnwind } from './fiberHooks';
 import {
-	Lane,
-	NoLane,
-	SyncLane,
 	getHighestPriorityLane,
+	Lane,
 	lanesToSchedulerPriority,
 	markRootFinished,
-	mergeLanes
+	mergeLanes,
+	NoLane,
+	SyncLane
 } from './fiberLanes';
-import { flushSyncCallbacks, scheduleSyncCallback } from './syncTaskQueue';
-import { HostRoot } from './workTags';
-import {
-	unstable_scheduleCallback as scheduleCallback,
-	unstable_NormalPriority as NormalPriority,
-	unstable_shouldYield,
-	unstable_cancelCallback
-} from 'scheduler';
-import { Effect } from './fiberHooks';
+import { throwException } from './fiberThrow';
+import { unwindWork } from './fiberUnwindWork';
 import { HookHasEffect, Passsive } from './hookEffectTags';
+import { flushSyncCallbacks, scheduleSyncCallback } from './syncTaskQueue';
+import { getSuspenseThenable, SuspenseException } from './thenable';
+import { HostRoot } from './workTags';
 
 // 全局指针，指向当前正在工作的 FiberNode
 let workInProgress: FiberNode | null = null;
@@ -40,7 +44,13 @@ type RootExitStatus = number;
 const RootInComplete = 1;
 // 执行结束
 const RootCompleted = 2;
-// TODO: 执行过程报错
+
+type SuspendedReason = typeof NotSuspended | typeof SuspendedOnData;
+const NotSuspended = 0;
+const SuspendedOnData = 6;
+
+let wipSuspendedReason: SuspendedReason = NotSuspended;
+let wipThrownValue: any = null;
 
 function prepareFreshStack(root: FiberRootNode, lane: Lane) {
 	root.finishedLane = NoLane;
@@ -60,7 +70,7 @@ export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
 }
 
 // 调度的起点
-function ensureRootIsScheduled(root: FiberRootNode) {
+export function ensureRootIsScheduled(root: FiberRootNode) {
 	const updateLane = getHighestPriorityLane(root.pendingLanes);
 	const existingCallback = root.callbackNode;
 
@@ -117,7 +127,7 @@ function ensureRootIsScheduled(root: FiberRootNode) {
 	root.callbackPripority = curPripority;
 }
 
-function markRootUpdated(root: FiberRootNode, lane: Lane) {
+export function markRootUpdated(root: FiberRootNode, lane: Lane) {
 	root.pendingLanes = mergeLanes(root.pendingLanes, lane);
 }
 
@@ -173,6 +183,14 @@ function renderRoot(root: FiberRootNode, lane: Lane, shouldTimeSlice: boolean) {
 	}
 	do {
 		try {
+			if (wipSuspendedReason !== NotSuspended && workInProgress !== null) {
+				// unwind
+				const thrownValue = wipThrownValue;
+				wipSuspendedReason = NotSuspended;
+				wipThrownValue = null;
+				throwAndUnwindWorkLoop(root, workInProgress, thrownValue, lane);
+			}
+
 			// 是否需要时间分片
 			shouldTimeSlice ? workLoopConcurrent() : workLoopSync();
 			break;
@@ -180,7 +198,9 @@ function renderRoot(root: FiberRootNode, lane: Lane, shouldTimeSlice: boolean) {
 			if (__DEV__) {
 				console.warn('workLoop 发生错误', e);
 			}
-			workInProgress = null;
+			// 捕获
+			debugger;
+			handleThrow(root, e, lane);
 		}
 	} while (true);
 
@@ -194,6 +214,61 @@ function renderRoot(root: FiberRootNode, lane: Lane, shouldTimeSlice: boolean) {
 	}
 	// TODO： 报错处理
 	return RootCompleted;
+}
+
+function throwAndUnwindWorkLoop(
+	root: FiberRootNode,
+	unitOfWork: FiberNode,
+	thrownValue: any,
+	lane: Lane
+) {
+	// 重置 FC 全局变量
+	resetHooksOnUnwind(unitOfWork);
+	// 请求返回后重新触发更新
+	throwException(root, thrownValue, lane);
+	// unwind
+	unwindUnitOfWork(unitOfWork);
+}
+
+function unwindUnitOfWork(unitOfWork: FiberNode) {
+	let incompleteWork: FiberNode | null = unitOfWork;
+
+	do {
+		// 递归向上
+		const next = unwindWork(incompleteWork);
+		if (next !== null) {
+			workInProgress = next;
+			return;
+		}
+
+		const returnFiber = incompleteWork.return as FiberNode;
+
+		if (returnFiber !== null) {
+			// 中断
+			returnFiber.deletions = null;
+		}
+
+		incompleteWork = returnFiber;
+	} while (incompleteWork !== null);
+
+	// 使用了 use，抛出了数据，但是没有使用suspense
+	// 到了root
+	workInProgress = null;
+}
+
+function handleThrow(root: FiberRootNode, thrownValue: any) {
+	// error boundary
+
+	//
+	if (thrownValue === SuspenseException) {
+		// 重新调度
+		wipSuspendedReason = SuspendedOnData;
+		thrownValue = getSuspenseThenable();
+	} else {
+		// todo: error boundary
+	}
+
+	wipThrownValue = thrownValue;
 }
 
 function performConcurrentWorkOnRoot(

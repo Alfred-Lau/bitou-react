@@ -1,34 +1,19 @@
 import { Container } from 'hostConfig';
 import { CallbackNode } from 'scheduler';
-import {
-  REACT_PROVIDER_TYPE,
-  REACT_SUSPENSE_TYPE,
-} from 'shared/ReactSymbols';
-import {
-  Key,
-  Props,
-  ReactElementType,
-} from 'shared/ReactTypes';
+import { REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from 'shared/ReactSymbols';
+import { Key, Props, ReactElementType, Ref, Wakeable } from 'shared/ReactTypes';
 
-import {
-  FiberFlags,
-  NoFlags,
-} from './fiberFlags';
+import { FiberFlags, NoFlags } from './fiberFlags';
 import { Effect } from './fiberHooks';
+import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
 import {
-  Lane,
-  Lanes,
-  NoLane,
-  NoLanes,
-} from './fiberLanes';
-import {
-  ContextProvider,
-  Fragment,
-  FunctionComponent,
-  HostComponent,
-  OffscreenComponent,
-  SuspenseComponent,
-  WorkTag,
+	ContextProvider,
+	Fragment,
+	FunctionComponent,
+	HostComponent,
+	OffscreenComponent,
+	SuspenseComponent,
+	WorkTag
 } from './workTags';
 
 export interface PendingPassiveEffects {
@@ -50,7 +35,7 @@ export class FiberNode {
 	sibling: FiberNode | null;
 	child: FiberNode | null;
 	index: number;
-	ref: any;
+	ref: Ref | null;
 	pendingProps: Props | null;
 	memoizedProps: Props;
 	// 函数式组件中用来链表存储 hook 的数据，类组件中用来存储实例。
@@ -111,6 +96,8 @@ export class FiberRootNode {
 
 	callbackNode: CallbackNode | null;
 	callbackPripority: Lane;
+
+	pingCache: WeakMap<Wakeable<any>, Set<Lane>> | null;
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
 		this.current = hostRootFiber;
@@ -126,6 +113,8 @@ export class FiberRootNode {
 			unmount: [],
 			update: []
 		};
+
+		this.pingCache = null;
 	}
 }
 

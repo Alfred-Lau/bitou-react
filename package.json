@@ -10,6 +10,7 @@
 		"demo:transition": "vite serve demo/transition --config ./scripts/vite/vite.config.js --force",
 		"demo:context": "vite serve demo/context --config ./scripts/vite/vite.config.js --force",
 		"demo:ref": "vite serve demo/ref --config ./scripts/vite/vite.config.js --force",
+		"demo:suspense-use": "vite serve demo/suspense-use --config ./scripts/vite/vite.config.js --force",
 		"lint": "eslint --ext .js,.ts,.jsx,.tsx --fix --quiet ./packages",
 		"test": "jest --config scripts/jest/jest.config.js"
 	},

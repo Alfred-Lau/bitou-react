@@ -1,30 +1,26 @@
 // dfs 递归中的归阶段
 
 import {
-  appendInitialChild,
-  Container,
-  createInstance,
-  createTextInstance,
-  Instance,
+	appendInitialChild,
+	Container,
+	createInstance,
+	createTextInstance,
+	Instance
 } from 'hostConfig';
 
 import { FiberNode } from './fiber';
 import { popProvider } from './fiberContext';
+import { NoFlags, Ref, Update, Visibility } from './fiberFlags';
+import { popSuspenseHandler } from './SuspenseContext';
 import {
-  NoFlags,
-  Ref,
-  Update,
-  Visibility,
-} from './fiberFlags';
-import {
-  ContextProvider,
-  Fragment,
-  FunctionComponent,
-  HostComponent,
-  HostRoot,
-  HostText,
-  OffscreenComponent,
-  SuspenseComponent,
+	ContextProvider,
+	Fragment,
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText,
+	OffscreenComponent,
+	SuspenseComponent
 } from './workTags';
 
 // import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
@@ -95,6 +91,8 @@ export const completeWork = (wip: FiberNode) => {
 			return null;
 		case SuspenseComponent:
 			// TODO:
+
+			popSuspenseHandler();
 			const offscreenFiber = wip.child as FiberNode;
 			const isHidden = offscreenFiber.pendingProps!.mode === 'hidden';
 			const currentOffscreenFiber = offscreenFiber.alternative;

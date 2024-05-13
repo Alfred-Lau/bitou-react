@@ -1,39 +1,21 @@
 import currentBatchConfig from 'react/src/currentBatchConfig';
-import {
-  Dispatch,
-  Dispatcher,
-} from 'react/src/currentDispatcher';
+import { Dispatch, Dispatcher } from 'react/src/currentDispatcher';
 import internals from 'shared/internals';
 import { REACT_CONTEXT_TYPE } from 'shared/ReactSymbols';
-import {
-  Action,
-  ReactContext,
-  Thenable,
-  Usable,
-} from 'shared/ReactTypes';
+import { Action, ReactContext, Thenable, Usable } from 'shared/ReactTypes';
 
 import { FiberNode } from './fiber';
-import {
-  Flags,
-  PassiveEffect,
-} from './fiberFlags';
-import {
-  Lane,
-  NoLane,
-  requestUpdateLane,
-} from './fiberLanes';
-import {
-  HookHasEffect,
-  Passsive,
-} from './hookEffectTags';
+import { Flags, PassiveEffect } from './fiberFlags';
+import { Lane, NoLane, requestUpdateLane } from './fiberLanes';
+import { HookHasEffect, Passsive } from './hookEffectTags';
 import { trackUsedThenable } from './thenable';
 import {
-  createUpdate,
-  createUpdateQueue,
-  enqueueUpdate,
-  processUpdateQueue,
-  Update,
-  UpdateQueue,
+	createUpdate,
+	createUpdateQueue,
+	enqueueUpdate,
+	processUpdateQueue,
+	Update,
+	UpdateQueue
 } from './updateQueue';
 import { scheduleUpdateOnFiber } from './workLoop';
 
@@ -459,4 +441,11 @@ function use<T>(usable: Usable<T>): T {
 	}
 
 	throw new Error('当前不支持的 use 参数');
+}
+
+export function resetHooksOnUnwind(wip: FiberNode) {
+	// 重置全局变量，开启 unwind 阶段
+	currentlyRenderingFiber = null;
+	currentHook = null;
+	workInProgressHook = null;
 }

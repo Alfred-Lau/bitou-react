@@ -1,38 +1,35 @@
 // dfs 递归中的递阶段
 import { ReactElementType } from 'shared/ReactTypes';
 
+import { mountChildFibers, reconcilerChildFibers } from './childFiber';
 import {
-  mountChildFibers,
-  reconcilerChildFibers,
-} from './childFiber';
-import {
-  createFiberFromFragment,
-  createFiberFromOffscreen,
-  createWorkInProgress,
-  FiberNode,
-  OffscreenProps,
+	createFiberFromFragment,
+	createFiberFromOffscreen,
+	createWorkInProgress,
+	FiberNode,
+	OffscreenProps
 } from './fiber';
 import { pushProvider } from './fiberContext';
 import {
-  ChildDeletion,
-  Placement,
-  Ref,
+	ChildDeletion,
+	DidCapture,
+	NoFlags,
+	Placement,
+	Ref
 } from './fiberFlags';
 import { renderWithHooks } from './fiberHooks';
 import { Lanes } from './fiberLanes';
+import { pushSuspenseHandler } from './SuspenseContext';
+import { processUpdateQueue, UpdateQueue } from './updateQueue';
 import {
-  processUpdateQueue,
-  UpdateQueue,
-} from './updateQueue';
-import {
-  ContextProvider,
-  Fragment,
-  FunctionComponent,
-  HostComponent,
-  HostRoot,
-  HostText,
-  OffscreenComponent,
-  SuspenseComponent,
+	ContextProvider,
+	Fragment,
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText,
+	OffscreenComponent,
+	SuspenseComponent
 } from './workTags';
 
 export const beginWork = (fiber: FiberNode, renderLanes: Lanes) => {
@@ -71,14 +68,18 @@ function updateSuspenseComponent(wip: FiberNode, renderLanes: Lanes) {
 
 	let showFallback = false;
 
-	const didSuspend = true;
+	const didSuspend = (wip.flags & DidCapture) !== NoFlags;
 
 	if (didSuspend) {
 		showFallback = true;
+		wip.flags &= ~DidCapture;
 	}
 
 	const nextPrimaryChildren = nextProps?.children;
 	const nextFallbackChildren = nextProps?.fallback;
+
+	pushSuspenseHandler(wip);
+
 	if (current === null) {
 		// mount
 		if (showFallback) {
