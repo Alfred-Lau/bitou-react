@@ -98,6 +98,8 @@ export class FiberRootNode {
 	callbackPripority: Lane;
 
 	pingCache: WeakMap<Wakeable<any>, Set<Lane>> | null;
+	suspendedLanes: Lanes;
+	pingedLanes: Lanes;
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
 		this.current = hostRootFiber;
@@ -115,6 +117,8 @@ export class FiberRootNode {
 		};
 
 		this.pingCache = null;
+		this.suspendedLanes = NoLanes;
+		this.pingedLanes = NoLanes;
 	}
 }
 
@@ -167,10 +171,7 @@ export function createFiberFromElement(
 	) {
 		// <Context.Provider /> type:object
 		fiberTag = ContextProvider;
-	} else if (
-		typeof type === 'object' &&
-		type.$$typeof === REACT_SUSPENSE_TYPE
-	) {
+	} else if (type === REACT_SUSPENSE_TYPE) {
 		fiberTag = SuspenseComponent;
 	} else if (typeof type !== 'function' && __DEV__) {
 		console.warn('createFiberFromElement: 未知的类型', element);

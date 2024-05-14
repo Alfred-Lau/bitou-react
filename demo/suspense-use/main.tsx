@@ -9,9 +9,9 @@ function App() {
 	return (
 		<div>
 			<Suspense fallback={<div>loading...</div>}>
-				<Cpn id={0} timeout={1000} />
+				<Cpn id={0} timeout={3000} />
 			</Suspense>
-			<Cpn id={0} timeout={1000} />
+			<Cpn id={0} timeout={3000} />
 		</div>
 	);
 }

@@ -2,7 +2,7 @@ import { Wakeable } from 'shared/ReactTypes';
 
 import { FiberRootNode } from './fiber';
 import { ShouldCapture } from './fiberFlags';
-import { Lane } from './fiberLanes';
+import { Lane, markRootPinged } from './fiberLanes';
 import { getSuspenseHandler } from './SuspenseContext';
 import { ensureRootIsScheduled, markRootUpdated } from './workLoop';
 
@@ -53,6 +53,7 @@ function attachPingListener(
 			pingCache.delete(wakeable);
 		}
 
+		markRootPinged(root, lane);
 		markRootUpdated(root, lane);
 		ensureRootIsScheduled(root);
 	}
