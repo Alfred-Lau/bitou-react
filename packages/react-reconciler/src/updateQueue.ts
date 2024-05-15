@@ -1,7 +1,14 @@
-import { Action } from 'shared/ReactTypes';
-import { Update } from './fiberFlags';
 import { Dispatch } from 'react/src/currentDispatcher';
-import { Lane, NoLane, isSubsetOfLanes } from './fiberLanes';
+import { Action } from 'shared/ReactTypes';
+
+import { FiberNode } from './fiber';
+import { Update } from './fiberFlags';
+import {
+  isSubsetOfLanes,
+  Lane,
+  mergeLanes,
+  NoLane,
+} from './fiberLanes';
 
 export interface Update<State> {
 	action: Action<State>;
@@ -38,7 +45,9 @@ export const createUpdateQueue = <State>() => {
 
 export const enqueueUpdate = <State>(
 	updateQueue: UpdateQueue<State>,
-	update: Update<State>
+	update: Update<State>,
+	fiber: FiberNode,
+	lane: Lane
 ) => {
 	// 调整支持批处理逻辑
 	const pending = updateQueue.shared.pending;
@@ -52,12 +61,19 @@ export const enqueueUpdate = <State>(
 	}
 
 	updateQueue.shared.pending = update;
+	fiber.lanes = mergeLanes(fiber.lanes, lane);
+	const alternative = fiber.alternative;
+	if (alternative !== null) {
+		// 为什么要更新 alternative 的 lanes？ 因为在 commit 阶段，会根据 lanes 来判断是否需要执行 effect
+		alternative.lanes = mergeLanes(alternative.lanes, lane);
+	}
 };
 
 export const processUpdateQueue = <State>(
 	baseState: State,
 	pendingUpdate: Update<State> | null,
-	renderLane: Lane
+	renderLane: Lane,
+	onSkipUpdate?: <State>(update: Update<State>) => void
 ): {
 	memoizedState: State;
 	baseState: State;
@@ -91,6 +107,8 @@ export const processUpdateQueue = <State>(
 				}
 
 				const clone = createUpdate(pending.action, pending.lane);
+
+				onSkipUpdate?.(clone);
 				// 是不是第一个被跳过的 update
 				if (newBaseQueueFirst === null) {
 					newBaseQueueFirst = clone;

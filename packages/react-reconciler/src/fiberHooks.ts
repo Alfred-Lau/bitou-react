@@ -1,21 +1,40 @@
 import currentBatchConfig from 'react/src/currentBatchConfig';
-import { Dispatch, Dispatcher } from 'react/src/currentDispatcher';
+import {
+  Dispatch,
+  Dispatcher,
+} from 'react/src/currentDispatcher';
 import internals from 'shared/internals';
 import { REACT_CONTEXT_TYPE } from 'shared/ReactSymbols';
-import { Action, ReactContext, Thenable, Usable } from 'shared/ReactTypes';
+import {
+  Action,
+  ReactContext,
+  Thenable,
+  Usable,
+} from 'shared/ReactTypes';
 
 import { FiberNode } from './fiber';
-import { Flags, PassiveEffect } from './fiberFlags';
-import { Lane, NoLane, requestUpdateLane } from './fiberLanes';
-import { HookHasEffect, Passsive } from './hookEffectTags';
+import {
+  Flags,
+  PassiveEffect,
+} from './fiberFlags';
+import {
+  Lane,
+  mergeLanes,
+  NoLane,
+  requestUpdateLane,
+} from './fiberLanes';
+import {
+  HookHasEffect,
+  Passsive,
+} from './hookEffectTags';
 import { trackUsedThenable } from './thenable';
 import {
-	createUpdate,
-	createUpdateQueue,
-	enqueueUpdate,
-	processUpdateQueue,
-	Update,
-	UpdateQueue
+  createUpdate,
+  createUpdateQueue,
+  enqueueUpdate,
+  processUpdateQueue,
+  Update,
+  UpdateQueue,
 } from './updateQueue';
 import { scheduleUpdateOnFiber } from './workLoop';
 
@@ -236,7 +255,12 @@ function updateState<State>(): [State, Dispatch<State>] {
 			memoizedState,
 			baseQueue: newBaseQueue,
 			baseState: newBaseState
-		} = processUpdateQueue(baseState, baseQueue, renderLane);
+		} = processUpdateQueue(baseState, baseQueue, renderLane, (update) => {
+			const skippedLane = update.lane;
+			const fiber = currentlyRenderingFiber as FiberNode;
+			// NoLanes
+			fiber.lanes = mergeLanes(fiber.lanes, skippedLane);
+		});
 		hook.memorizedState = memoizedState;
 		hook.baseState = newBaseState;
 		hook.baseQueue = newBaseQueue;
@@ -279,7 +303,7 @@ function dispatchSetState<State>(
 	// 和 hostroot 首屏渲染流程类似，接入更新队列
 	const lane = requestUpdateLane();
 	const update = createUpdate(action, lane);
-	enqueueUpdate(updateQueue, update);
+	enqueueUpdate(updateQueue, update, fiber, lane);
 	scheduleUpdateOnFiber(fiber, lane);
 }
 

@@ -1,37 +1,57 @@
 import { scheduleMicroTask } from 'hostConfig';
 import {
-	unstable_cancelCallback,
-	unstable_NormalPriority as NormalPriority,
-	unstable_scheduleCallback as scheduleCallback,
-	unstable_shouldYield
+  unstable_cancelCallback,
+  unstable_NormalPriority as NormalPriority,
+  unstable_scheduleCallback as scheduleCallback,
+  unstable_shouldYield,
 } from 'scheduler';
 
 import { beginWork } from './beginWork';
-import { commitLayoutEffects, commitMutationEffects } from './commitWork';
+import {
+  commitLayoutEffects,
+  commitMutationEffects,
+} from './commitWork';
 import { completeWork } from './completeWork';
 import {
-	createWorkInProgress,
-	FiberNode,
-	FiberRootNode,
-	PendingPassiveEffects
+  createWorkInProgress,
+  FiberNode,
+  FiberRootNode,
+  PendingPassiveEffects,
 } from './fiber';
-import { Flags, MutationMask, NoFlags, PassiveMask } from './fiberFlags';
-import { Effect, resetHooksOnUnwind } from './fiberHooks';
 import {
-	getNextLane,
-	Lane,
-	lanesToSchedulerPriority,
-	markRootFinished,
-	markRootSuspended,
-	mergeLanes,
-	NoLane,
-	SyncLane
+  Flags,
+  MutationMask,
+  NoFlags,
+  PassiveMask,
+} from './fiberFlags';
+import {
+  Effect,
+  resetHooksOnUnwind,
+} from './fiberHooks';
+import {
+  getNextLane,
+  Lane,
+  lanesToSchedulerPriority,
+  markRootFinished,
+  markRootSuspended,
+  mergeLanes,
+  NoLane,
+  SyncLane,
 } from './fiberLanes';
 import { throwException } from './fiberThrow';
 import { unwindWork } from './fiberUnwindWork';
-import { HookHasEffect, Passsive } from './hookEffectTags';
-import { flushSyncCallbacks, scheduleSyncCallback } from './syncTaskQueue';
-import { getSuspenseThenable, SuspenseException } from './thenable';
+import {
+  HookHasEffect,
+  Passsive,
+} from './hookEffectTags';
+import {
+  flushSyncCallbacks,
+  scheduleSyncCallback,
+} from './syncTaskQueue';
+import {
+  getSuspenseThenable,
+  SuspenseException,
+} from './thenable';
 import { HostRoot } from './workTags';
 
 // 全局指针，指向当前正在工作的 FiberNode
@@ -72,7 +92,7 @@ function prepareFreshStack(root: FiberRootNode, lane: Lane) {
 export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
 	// 调度功能
 	// 从当前节点开始向上遍历，找到根节点
-	const root = markUpdateFromFiberToRoot(fiber);
+	const root = markUpdateLaneFromFiberToRoot(fiber);
 	markRootUpdated(root, lane);
 	// 从根节点开始渲染
 	// VIP: 添加调度机制
@@ -141,10 +161,15 @@ export function markRootUpdated(root: FiberRootNode, lane: Lane) {
 	root.pendingLanes = mergeLanes(root.pendingLanes, lane);
 }
 
-function markUpdateFromFiberToRoot(fiber: FiberNode) {
+function markUpdateLaneFromFiberToRoot(fiber: FiberNode, lane: Lane) {
 	let node = fiber;
 	let parent = fiber.return;
 	while (parent !== null) {
+		parent.childLanes = mergeLanes(parent.childLanes, lane);
+		const alternative = parent.alternative;
+		if (alternative !== null) {
+			alternative.childLanes = mergeLanes(alternative.childLanes, lane);
+		}
 		// 当前节点是一个普通的节点
 		node = parent;
 		parent = parent.return;

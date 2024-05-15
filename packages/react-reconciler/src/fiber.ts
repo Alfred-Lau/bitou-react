@@ -1,19 +1,36 @@
 import { Container } from 'hostConfig';
 import { CallbackNode } from 'scheduler';
-import { REACT_PROVIDER_TYPE, REACT_SUSPENSE_TYPE } from 'shared/ReactSymbols';
-import { Key, Props, ReactElementType, Ref, Wakeable } from 'shared/ReactTypes';
-
-import { FiberFlags, NoFlags } from './fiberFlags';
-import { Effect } from './fiberHooks';
-import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
 import {
-	ContextProvider,
-	Fragment,
-	FunctionComponent,
-	HostComponent,
-	OffscreenComponent,
-	SuspenseComponent,
-	WorkTag
+  REACT_PROVIDER_TYPE,
+  REACT_SUSPENSE_TYPE,
+} from 'shared/ReactSymbols';
+import {
+  Key,
+  Props,
+  ReactElementType,
+  Ref,
+  Wakeable,
+} from 'shared/ReactTypes';
+
+import {
+  FiberFlags,
+  NoFlags,
+} from './fiberFlags';
+import { Effect } from './fiberHooks';
+import {
+  Lane,
+  Lanes,
+  NoLane,
+  NoLanes,
+} from './fiberLanes';
+import {
+  ContextProvider,
+  Fragment,
+  FunctionComponent,
+  HostComponent,
+  OffscreenComponent,
+  SuspenseComponent,
+  WorkTag,
 } from './workTags';
 
 export interface PendingPassiveEffects {
@@ -48,6 +65,7 @@ export class FiberNode {
 	subtreeFlags: FiberFlags;
 
 	lanes: Lanes;
+	childLanes;
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
 		this.key = key || null;
@@ -81,6 +99,7 @@ export class FiberNode {
 		this.subtreeFlags = NoFlags;
 
 		this.lanes = NoLanes;
+		this.childLanes = NoLanes;
 	}
 }
 
@@ -151,6 +170,7 @@ export const createWorkInProgress = (
 	wip.memoizedState = current.memoizedState;
 
 	wip.lanes = current.lanes;
+	wip.childLanes = current.childLanes;
 	wip.ref = current.ref;
 	return wip;
 };

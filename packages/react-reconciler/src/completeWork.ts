@@ -1,26 +1,32 @@
 // dfs 递归中的归阶段
 
 import {
-	appendInitialChild,
-	Container,
-	createInstance,
-	createTextInstance,
-	Instance
+  appendInitialChild,
+  Container,
+  createInstance,
+  createTextInstance,
+  Instance,
 } from 'hostConfig';
 
 import { FiberNode } from './fiber';
 import { popProvider } from './fiberContext';
-import { NoFlags, Ref, Update, Visibility } from './fiberFlags';
+import {
+  NoFlags,
+  Ref,
+  Update,
+  Visibility,
+} from './fiberFlags';
+import { mergeLanes } from './fiberLanes';
 import { popSuspenseHandler } from './SuspenseContext';
 import {
-	ContextProvider,
-	Fragment,
-	FunctionComponent,
-	HostComponent,
-	HostRoot,
-	HostText,
-	OffscreenComponent,
-	SuspenseComponent
+  ContextProvider,
+  Fragment,
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+  OffscreenComponent,
+  SuspenseComponent,
 } from './workTags';
 
 // import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
@@ -151,15 +157,23 @@ function bubbleProperties(wip: FiberNode) {
 	let subtreeFlags = NoFlags;
 	let child = wip.child;
 
+	let newChildLanes = NoFlags;
+
 	while (child !== null) {
 		subtreeFlags |= child.subtreeFlags;
 		subtreeFlags |= child.flags;
+
+		newChildLanes = mergeLanes(
+			newChildLanes,
+			mergeLanes(child.lanes, child.childLanes)
+		);
 
 		child.return = wip;
 		child = child.sibling;
 	}
 
 	wip.subtreeFlags |= subtreeFlags;
+	wip.childLanes = newChildLanes;
 }
 
 function markRef(fiber: FiberNode) {

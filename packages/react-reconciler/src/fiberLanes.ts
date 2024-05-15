@@ -1,10 +1,10 @@
 import ReactCurrentBatchConfig from 'react/src/currentBatchConfig';
 import {
-	unstable_getCurrentPriorityLevel,
-	unstable_IdlePriority,
-	unstable_ImmediatePriority,
-	unstable_NormalPriority,
-	unstable_UserBlockingPriority
+  unstable_getCurrentPriorityLevel,
+  unstable_IdlePriority,
+  unstable_ImmediatePriority,
+  unstable_NormalPriority,
+  unstable_UserBlockingPriority,
 } from 'scheduler';
 
 import { FiberRootNode } from './fiber';
@@ -121,4 +121,8 @@ export function getNextLane(root: FiberRootNode): Lane {
 	}
 
 	return nextLane;
+}
+
+export function includeSomeLanes(set: Lanes, subset: Lane | Lanes): boolean {
+	return (set & subset) !== NoLanes;
 }
